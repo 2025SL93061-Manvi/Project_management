@@ -19,6 +19,7 @@ public class AdminService {
 
     private final ComplaintRepository complaintRepository;
     private final UserRepository userRepository;
+    private final EmailService emailService;
 
     public List<ComplaintDTO> getAllComplaints() {
         return complaintRepository.findAll()
@@ -46,6 +47,27 @@ public class AdminService {
         Complaint complaint = complaintRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
         complaint.setStatus(ComplaintStatus.valueOf(status.toUpperCase()));
+        Complaint saved = complaintRepository.save(complaint);
+        if (saved.getRaisedBy() != null) {
+            emailService.sendComplaintStatusEmail(
+                    saved.getRaisedBy().getEmail(),
+                    saved.getRaisedBy().getName(),
+                    saved.getTitle(),
+                    saved.getStatus().name());
+        }
+        return toDTO(saved);
+    }
+
+    public ComplaintDTO edit(Long id, ComplaintDTO dto) {
+        Complaint complaint = complaintRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Complaint not found"));
+        if (dto.getTitle() != null && !dto.getTitle().isBlank()) {
+            complaint.setTitle(dto.getTitle());
+        }
+        complaint.setDescription(dto.getDescription());
+        if (dto.getType() != null) {
+            complaint.setType(ComplaintType.valueOf(dto.getType()));
+        }
         return toDTO(complaintRepository.save(complaint));
     }
 
@@ -58,6 +80,8 @@ public class AdminService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         user.setEnabled(!user.isEnabled());
         userRepository.save(user);
+        // Notify the user about their account status change
+        emailService.sendAccountStatusEmail(user.getEmail(), user.getName(), user.isEnabled());
     }
 
     private ComplaintDTO toDTO(Complaint c) {

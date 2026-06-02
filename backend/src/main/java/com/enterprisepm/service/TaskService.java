@@ -8,6 +8,7 @@ import com.enterprisepm.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,7 +29,7 @@ public class TaskService {
     public List<TaskDTO> getTasksByUser(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return taskRepository.findByAssignedTo(user)
+        return taskRepository.findByAssignedToOrAssigneesContaining(user)
                 .stream().map(this::toDTO).collect(Collectors.toList());
     }
 
@@ -43,15 +44,27 @@ public class TaskService {
         Project project = projectRepository.findById(dto.getProjectId())
                 .orElseThrow(() -> new RuntimeException("Project not found"));
         task.setProject(project);
+
+        // Legacy single assignee (kept for backward-compat)
         if (dto.getAssignedToId() != null) {
             User assignee = userRepository.findById(dto.getAssignedToId())
                     .orElseThrow(() -> new RuntimeException("User not found"));
             task.setAssignedTo(assignee);
-            emailService.sendTaskAssignmentEmail(
-                    assignee.getEmail(), assignee.getName(),
-                    task.getTitle(), project.getName(), dto.getEndDate());
         }
-        return toDTO(taskRepository.save(task));
+
+        // Multi-assignees
+        List<User> assignees = resolveAssignees(dto, project);
+        task.setAssignees(assignees);
+
+        Task saved = taskRepository.save(task);
+
+        // Send email to all assignees
+        for (User a : assignees) {
+            emailService.sendTaskAssignmentEmail(
+                    a.getEmail(), a.getName(), saved.getTitle(), project.getName(), dto.getEndDate());
+        }
+
+        return toDTO(saved);
     }
 
     public TaskDTO update(Long id, TaskDTO dto) {
@@ -63,25 +76,51 @@ public class TaskService {
         task.setPriority(TaskPriority.valueOf(dto.getPriority()));
         task.setStartDate(dto.getStartDate());
         task.setEndDate(dto.getEndDate());
+
+        // Legacy single assignee
         if (dto.getAssignedToId() != null) {
             User assignee = userRepository.findById(dto.getAssignedToId())
                     .orElseThrow(() -> new RuntimeException("User not found"));
-            boolean isNewAssignment = task.getAssignedTo() == null
-                    || !task.getAssignedTo().getId().equals(assignee.getId());
             task.setAssignedTo(assignee);
-            if (isNewAssignment) {
-                emailService.sendTaskAssignmentEmail(
-                        assignee.getEmail(), assignee.getName(),
-                        task.getTitle(), task.getProject().getName(), dto.getEndDate());
-            }
         } else {
             task.setAssignedTo(null);
         }
-        return toDTO(taskRepository.save(task));
+
+        // Multi-assignees: detect newly added
+        List<User> oldAssignees = new ArrayList<>(task.getAssignees());
+        List<User> newAssignees = resolveAssignees(dto, task.getProject());
+        task.setAssignees(newAssignees);
+
+        Task saved = taskRepository.save(task);
+
+        // Email only newly added assignees
+        List<Long> oldIds = oldAssignees.stream().map(User::getId).collect(Collectors.toList());
+        for (User a : newAssignees) {
+            if (!oldIds.contains(a.getId())) {
+                emailService.sendTaskAssignmentEmail(
+                        a.getEmail(), a.getName(), saved.getTitle(),
+                        saved.getProject().getName(), dto.getEndDate());
+            }
+        }
+
+        return toDTO(saved);
     }
 
     public void delete(Long id) {
         taskRepository.deleteById(id);
+    }
+
+    private List<User> resolveAssignees(TaskDTO dto, Project project) {
+        if (dto.getAssigneeIds() != null && !dto.getAssigneeIds().isEmpty()) {
+            return userRepository.findAllById(dto.getAssigneeIds());
+        }
+        // Fall back to single assignedToId if multi-list not provided
+        if (dto.getAssignedToId() != null) {
+            return userRepository.findById(dto.getAssignedToId())
+                    .map(u -> { List<User> l = new ArrayList<>(); l.add(u); return l; })
+                    .orElse(new ArrayList<>());
+        }
+        return new ArrayList<>();
     }
 
     public TaskDTO toDTO(Task task) {
@@ -98,6 +137,11 @@ public class TaskService {
         if (task.getAssignedTo() != null) {
             dto.setAssignedToId(task.getAssignedTo().getId());
             dto.setAssignedToName(task.getAssignedTo().getName());
+        }
+        // Multi-assignees
+        if (task.getAssignees() != null && !task.getAssignees().isEmpty()) {
+            dto.setAssigneeIds(task.getAssignees().stream().map(User::getId).collect(Collectors.toList()));
+            dto.setAssigneeNames(task.getAssignees().stream().map(User::getName).collect(Collectors.toList()));
         }
         return dto;
     }

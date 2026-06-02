@@ -36,10 +36,30 @@ public class FileController {
 
     @GetMapping("/download/{fileId}")
     public ResponseEntity<byte[]> download(@PathVariable Long fileId) throws IOException {
+        ProjectFile meta = fileStorageService.getMetadata(fileId);
         byte[] data = fileStorageService.download(fileId);
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"file\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + meta.getFileName() + "\"")
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(data);
+    }
+
+    @GetMapping("/view/{fileId}")
+    public ResponseEntity<byte[]> view(@PathVariable Long fileId) throws IOException {
+        ProjectFile meta = fileStorageService.getMetadata(fileId);
+        byte[] data = fileStorageService.download(fileId);
+        MediaType mediaType;
+        try {
+            mediaType = MediaType.parseMediaType(
+                    meta.getFileType() != null ? meta.getFileType() : "application/octet-stream");
+        } catch (Exception e) {
+            mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        }
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "inline; filename=\"" + meta.getFileName() + "\"")
+                .contentType(mediaType)
                 .body(data);
     }
 

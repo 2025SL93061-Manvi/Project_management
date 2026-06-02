@@ -11,10 +11,14 @@ export const fileService = {
 
   download: (fileId) => api.get(`/files/download/${fileId}`, { responseType: 'blob' }),
 
+  view: (fileId) => api.get(`/files/view/${fileId}`, { responseType: 'blob' }),
+
   delete: (fileId) => api.delete(`/files/${fileId}`),
 };
 
 export const reportService = {
   download: (projectId) =>
     api.get(`/reports/project/${projectId}`, { responseType: 'blob' }),
+  email: (projectId) =>
+    api.post(`/reports/project/${projectId}/email`),
 };

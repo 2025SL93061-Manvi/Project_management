@@ -20,6 +20,7 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final TaskRepository taskRepository;
+    private final EmailService emailService;
 
     public List<ProjectDTO> getAllProjects() {
         return projectRepository.findAll()
@@ -61,6 +62,7 @@ public class ProjectService {
     public ProjectDTO update(Long id, ProjectDTO dto) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
+        ProjectStatus oldStatus = project.getStatus();
         project.setName(dto.getName());
         project.setDescription(dto.getDescription());
         project.setStatus(ProjectStatus.valueOf(dto.getStatus()));
@@ -70,7 +72,18 @@ public class ProjectService {
             List<User> members = userRepository.findAllById(dto.getMemberIds());
             project.setMembers(members);
         }
-        return toDTO(projectRepository.save(project));
+        Project saved = projectRepository.save(project);
+
+        // Email owner when status changes
+        if (!oldStatus.equals(saved.getStatus()) && saved.getOwner() != null) {
+            emailService.sendProjectStatusEmail(
+                    saved.getOwner().getEmail(),
+                    saved.getOwner().getName(),
+                    saved.getName(),
+                    saved.getStatus().name());
+        }
+
+        return toDTO(saved);
     }
 
     public void delete(Long id) {

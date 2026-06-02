@@ -20,4 +20,5 @@ public class DashboardDTO {
     private List<TaskDTO> myTasks;
     private List<MilestoneDTO> upcomingMilestones;
     private List<MeetingDTO> upcomingMeetings;
+    private List<HolidayDTO> upcomingHolidays;
 }

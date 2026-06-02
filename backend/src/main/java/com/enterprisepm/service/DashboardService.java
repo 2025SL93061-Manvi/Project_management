@@ -1,6 +1,7 @@
 package com.enterprisepm.service;
 
 import com.enterprisepm.dto.DashboardDTO;
+import com.enterprisepm.dto.HolidayDTO;
 import com.enterprisepm.dto.MilestoneDTO;
 import com.enterprisepm.dto.MeetingDTO;
 import com.enterprisepm.model.*;
@@ -21,6 +22,7 @@ public class DashboardService {
     private final MilestoneRepository milestoneRepository;
     private final MeetingRepository meetingRepository;
     private final UserRepository userRepository;
+    private final HolidayRepository holidayRepository;
     private final ProjectService projectService;
     private final TaskService taskService;
 
@@ -48,7 +50,7 @@ public class DashboardService {
         dashboard.setRecentProjects(myProjects.stream()
                 .limit(5).map(projectService::toDTO).collect(Collectors.toList()));
 
-        List<Task> myTasks = taskRepository.findByAssignedTo(user);
+        List<Task> myTasks = taskRepository.findByAssignedToOrAssigneesContaining(user);
         dashboard.setTotalTasks(myTasks.size());
         dashboard.setTasksTodo((int) myTasks.stream()
                 .filter(t -> t.getStatus() == TaskStatus.TODO).count());
@@ -95,6 +97,21 @@ public class DashboardService {
                 })
                 .collect(Collectors.toList());
         dashboard.setUpcomingMeetings(upcomingMeetings);
+
+        List<HolidayDTO> upcomingHolidays = holidayRepository.findAll().stream()
+                .filter(h -> h.getHolidayDate() != null
+                        && !h.getHolidayDate().isBefore(today)
+                        && !h.getHolidayDate().isAfter(in30Days))
+                .sorted((a, b) -> a.getHolidayDate().compareTo(b.getHolidayDate()))
+                .map(h -> {
+                    HolidayDTO dto = new HolidayDTO();
+                    dto.setId(h.getId());
+                    dto.setName(h.getName());
+                    dto.setHolidayDate(h.getHolidayDate());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+        dashboard.setUpcomingHolidays(upcomingHolidays);
 
         return dashboard;
     }

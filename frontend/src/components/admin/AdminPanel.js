@@ -14,6 +14,7 @@ export default function AdminPanel() {
   const [complaints, setComplaints]   = useState([]);
   const [compLoading, setCompLoading] = useState(false);
   const [showModal, setShowModal]     = useState(false);
+  const [editComplaint, setEditComplaint] = useState(null);
   const [form, setForm] = useState({ title:'', description:'', type:'COMPLAINT' });
   const [error, setError] = useState('');
 
@@ -50,6 +51,24 @@ export default function AdminPanel() {
       setShowModal(false);
       setForm({ title:'', description:'', type:'COMPLAINT' });
     } catch { setError('Failed to submit'); }
+  };
+
+  const openEdit = (c) => {
+    setEditComplaint(c);
+    setForm({ title: c.title, description: c.description || '', type: c.type });
+    setShowModal(true);
+  };
+
+  const handleEditComplaint = async (e) => {
+    e.preventDefault();
+    setError('');
+    try {
+      const res = await adminService.editComplaint(editComplaint.id, form);
+      setComplaints(complaints.map(c => c.id === editComplaint.id ? res.data : c));
+      setShowModal(false);
+      setEditComplaint(null);
+      setForm({ title:'', description:'', type:'COMPLAINT' });
+    } catch { setError('Failed to update'); }
   };
 
   return (
@@ -130,6 +149,7 @@ export default function AdminPanel() {
                     {isAdmin && <th>Raised By</th>}
                     <th>Date</th>
                     {isAdmin && <th>Update Status</th>}
+                    {isAdmin && <th>Edit</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -159,6 +179,11 @@ export default function AdminPanel() {
                           </select>
                         </td>
                       )}
+                      {isAdmin && (
+                        <td>
+                          <button className="btn btn-warning btn-sm" onClick={() => openEdit(c)}>Edit</button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -169,14 +194,16 @@ export default function AdminPanel() {
       )}
 
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+        <div className="modal-overlay" onClick={() => { setShowModal(false); setEditComplaint(null); }}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <span className="modal-title">Submit Complaint / Feedback / Query</span>
-              <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
+              <span className="modal-title">
+                {editComplaint ? 'Edit Complaint / Feedback' : 'Submit Complaint / Feedback / Query'}
+              </span>
+              <button className="modal-close" onClick={() => { setShowModal(false); setEditComplaint(null); }}>×</button>
             </div>
             {error && <div className="alert alert-error">{error}</div>}
-            <form onSubmit={handleCreateComplaint}>
+            <form onSubmit={editComplaint ? handleEditComplaint : handleCreateComplaint}>
               <div className="form-group">
                 <label>Title *</label>
                 <input value={form.title}
@@ -196,8 +223,13 @@ export default function AdminPanel() {
                   onChange={e => setForm({...form, description: e.target.value})} />
               </div>
               <div className="flex-gap">
-                <button type="submit" className="btn btn-primary">Submit</button>
-                <button type="button" className="btn btn-warning" onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary">
+                  {editComplaint ? 'Update' : 'Submit'}
+                </button>
+                <button type="button" className="btn btn-warning"
+                  onClick={() => { setShowModal(false); setEditComplaint(null); }}>
+                  Cancel
+                </button>
               </div>
             </form>
           </div>

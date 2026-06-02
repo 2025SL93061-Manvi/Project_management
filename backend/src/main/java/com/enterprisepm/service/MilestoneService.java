@@ -17,6 +17,7 @@ public class MilestoneService {
 
     private final MilestoneRepository milestoneRepository;
     private final ProjectRepository projectRepository;
+    private final EmailService emailService;
 
     public List<MilestoneDTO> getByProject(Long projectId) {
         return milestoneRepository.findByProjectId(projectId)
@@ -37,10 +38,25 @@ public class MilestoneService {
     public MilestoneDTO update(Long id, MilestoneDTO dto) {
         Milestone milestone = milestoneRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Milestone not found"));
+        boolean wasCompleted = milestone.isCompleted();
         milestone.setTitle(dto.getTitle());
         milestone.setDueDate(dto.getDueDate());
         milestone.setCompleted(dto.isCompleted());
-        return toDTO(milestoneRepository.save(milestone));
+        Milestone saved = milestoneRepository.save(milestone);
+
+        // Email project owner when milestone is newly marked complete
+        if (!wasCompleted && saved.isCompleted()) {
+            Project project = saved.getProject();
+            if (project.getOwner() != null) {
+                emailService.sendMilestoneCompletedEmail(
+                        project.getOwner().getEmail(),
+                        project.getOwner().getName(),
+                        saved.getTitle(),
+                        project.getName());
+            }
+        }
+
+        return toDTO(saved);
     }
 
     public void delete(Long id) {

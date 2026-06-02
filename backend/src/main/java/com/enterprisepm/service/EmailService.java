@@ -1,9 +1,9 @@
 package com.enterprisepm.service;
 
-import lombok.RequiredArgsConstructor;
+import com.resend.Resend;
+import com.resend.core.exception.ResendException;
+import com.resend.services.emails.model.CreateEmailOptions;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -11,16 +11,19 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Service
-@RequiredArgsConstructor
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    private final Resend resend;
 
-    @Value("${spring.mail.username}")
+    @Value("${resend.from}")
     private String fromEmail;
 
     @Value("${app.name}")
     private String appName;
+
+    public EmailService(@Value("${resend.api-key}") String apiKey) {
+        this.resend = new Resend(apiKey);
+    }
 
     @Async
     public void sendTaskAssignmentEmail(String toEmail, String userName,
@@ -65,19 +68,71 @@ public class EmailService {
         send(toEmail, subject, body);
     }
 
+    @Async
+    public void sendMilestoneCompletedEmail(String toEmail, String userName,
+                                             String milestoneTitle, String projectName) {
+        String subject = "[" + appName + "] Milestone Completed: " + milestoneTitle;
+        String body = "Hi " + userName + ",\n\n"
+                + "A milestone has been marked as completed:\n\n"
+                + "  Milestone: " + milestoneTitle + "\n"
+                + "  Project:   " + projectName + "\n\n"
+                + "Great progress! Log in to view the full status.\n\n"
+                + "Regards,\n" + appName;
+        send(toEmail, subject, body);
+    }
+
+    @Async
+    public void sendComplaintStatusEmail(String toEmail, String userName,
+                                          String complaintTitle, String newStatus) {
+        String subject = "[" + appName + "] Your submission has been updated: " + complaintTitle;
+        String body = "Hi " + userName + ",\n\n"
+                + "The status of your submission has been updated:\n\n"
+                + "  Title:  " + complaintTitle + "\n"
+                + "  Status: " + newStatus + "\n\n"
+                + "Log in for more details.\n\n"
+                + "Regards,\n" + appName;
+        send(toEmail, subject, body);
+    }
+
+    @Async
+    public void sendProjectStatusEmail(String toEmail, String userName,
+                                        String projectName, String newStatus) {
+        String subject = "[" + appName + "] Project Status Updated: " + projectName;
+        String body = "Hi " + userName + ",\n\n"
+                + "The status of your project has changed:\n\n"
+                + "  Project: " + projectName + "\n"
+                + "  Status:  " + newStatus + "\n\n"
+                + "Log in to view your project dashboard.\n\n"
+                + "Regards,\n" + appName;
+        send(toEmail, subject, body);
+    }
+
+    @Async
+    public void sendAccountStatusEmail(String toEmail, String userName, boolean enabled) {
+        String state = enabled ? "re-enabled" : "disabled";
+        String subject = "[" + appName + "] Your account has been " + state;
+        String body = "Hi " + userName + ",\n\n"
+                + "Your account has been " + state + " by an administrator.\n\n"
+                + (enabled ? "You can now log in normally."
+                           : "Please contact your administrator if you believe this is an error.")
+                + "\n\nRegards,\n" + appName;
+        send(toEmail, subject, body);
+    }
+
     private void send(String to, String subject, String body) {
         if (fromEmail == null || fromEmail.isBlank() || fromEmail.contains("your-email")) {
-            System.out.println("[EmailService] SMTP not configured — skipping email to " + to);
+            System.out.println("[EmailService] Resend not configured — skipping email to " + to);
             return;
         }
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(to);
-            message.setSubject(subject);
-            message.setText(body);
-            mailSender.send(message);
-        } catch (Exception e) {
+            CreateEmailOptions options = CreateEmailOptions.builder()
+                    .from(fromEmail)
+                    .to(to)
+                    .subject(subject)
+                    .text(body)
+                    .build();
+            resend.emails().send(options);
+        } catch (ResendException e) {
             System.err.println("Email send failed to " + to + ": " + e.getMessage());
         }
     }

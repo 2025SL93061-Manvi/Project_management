@@ -60,6 +60,11 @@ public class FileStorageService {
         return Files.readAllBytes(filePath);
     }
 
+    public ProjectFile getMetadata(Long fileId) {
+        return fileRepository.findById(fileId)
+                .orElseThrow(() -> new RuntimeException("File not found"));
+    }
+
     public void delete(Long fileId) throws IOException {
         ProjectFile projectFile = fileRepository.findById(fileId)
                 .orElseThrow(() -> new RuntimeException("File not found"));

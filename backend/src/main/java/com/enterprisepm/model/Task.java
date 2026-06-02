@@ -46,6 +46,14 @@ public class Task {
     @JoinColumn(name = "assigned_to_id")
     private User assignedTo;
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "task_assignees",
+        joinColumns = @JoinColumn(name = "task_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private java.util.List<User> assignees = new java.util.ArrayList<>();
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

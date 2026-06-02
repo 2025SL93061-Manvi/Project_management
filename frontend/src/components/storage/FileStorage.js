@@ -54,6 +54,21 @@ export default function FileStorage() {
     }
   };
 
+  const isViewable = (fileType) => {
+    if (!fileType) return false;
+    return fileType.startsWith('image/') || fileType === 'application/pdf';
+  };
+
+  const handleView = async (file) => {
+    try {
+      const res = await fileService.view(file.id);
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: file.fileType }));
+      window.open(url, '_blank');
+    } catch {
+      alert('Failed to open file');
+    }
+  };
+
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this file?')) return;
     await fileService.delete(id);
@@ -96,13 +111,18 @@ export default function FileStorage() {
               )}
               {files.map(f => (
                 <tr key={f.id}>
-                  <td>📄 {f.fileName}</td>
+                  <td>
+                    {f.fileType?.startsWith('image/') ? '🖼️' : f.fileType === 'application/pdf' ? '📕' : '📄'} {f.fileName}
+                  </td>
                   <td>{f.fileType || '—'}</td>
                   <td>{formatSize(f.fileSize)}</td>
                   <td>{f.uploadedBy?.name || '—'}</td>
                   <td>{f.createdAt ? new Date(f.createdAt).toLocaleDateString() : '—'}</td>
                   <td>
                     <div className="flex-gap">
+                      {isViewable(f.fileType) && (
+                        <button className="btn btn-primary btn-sm" onClick={() => handleView(f)}>View</button>
+                      )}
                       <button className="btn btn-success btn-sm" onClick={() => handleDownload(f)}>Download</button>
                       {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
                         <button className="btn btn-danger btn-sm" onClick={() => handleDelete(f.id)}>Delete</button>

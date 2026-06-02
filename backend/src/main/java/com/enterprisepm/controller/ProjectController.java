@@ -5,6 +5,7 @@ import com.enterprisepm.service.ProjectService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +36,7 @@ public class ProjectController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<ProjectDTO> create(
             @Valid @RequestBody ProjectDTO dto,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -42,6 +44,7 @@ public class ProjectController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<ProjectDTO> update(
             @PathVariable Long id,
             @Valid @RequestBody ProjectDTO dto) {
@@ -49,6 +52,7 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<String> delete(@PathVariable Long id) {
         projectService.delete(id);
         return ResponseEntity.ok("Project deleted");

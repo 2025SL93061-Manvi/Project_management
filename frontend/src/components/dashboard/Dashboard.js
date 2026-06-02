@@ -193,7 +193,7 @@ export default function Dashboard() {
 
         <div className="card">
           <div className="card-header">
-            <span className="card-title">📅 Upcoming Meetings</span>
+            <span className="card-title">Upcoming Meetings</span>
             <small style={{color:'#888'}}>Next 7 days</small>
           </div>
           <table>
@@ -214,6 +214,30 @@ export default function Dashboard() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div className="card">
+        <div className="card-header">
+          <span className="card-title">Upcoming Holidays</span>
+          <small style={{color:'#888'}}>Next 30 days</small>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Holiday</th><th>Date</th><th>Day</th></tr>
+          </thead>
+          <tbody>
+            {(!data.upcomingHolidays || data.upcomingHolidays.length === 0) && (
+              <tr><td colSpan={3} className="empty-msg">No holidays in the next 30 days</td></tr>
+            )}
+            {data.upcomingHolidays?.map(h => (
+              <tr key={h.id}>
+                <td>{h.name}</td>
+                <td>{h.holidayDate}</td>
+                <td>{new Date(h.holidayDate + 'T00:00:00').toLocaleDateString('default', { weekday: 'long' })}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

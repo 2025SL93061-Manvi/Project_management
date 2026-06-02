@@ -7,6 +7,7 @@ export const adminService = {
   getMyComplaints:   ()           => api.get('/admin/complaints/my'),
   createComplaint:   (data)       => api.post('/admin/complaints', data),
   updateStatus:      (id, status) => api.put(`/admin/complaints/${id}/status?status=${status}`),
+  editComplaint:     (id, data)   => api.put(`/admin/complaints/${id}`, data),
 };
 
 export const calendarService = {

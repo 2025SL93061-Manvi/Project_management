@@ -64,4 +64,12 @@ public class AdminController {
             @RequestParam String status) {
         return ResponseEntity.ok(adminService.updateStatus(id, status));
     }
+
+    @PutMapping("/complaints/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ComplaintDTO> editComplaint(
+            @PathVariable Long id,
+            @RequestBody ComplaintDTO dto) {
+        return ResponseEntity.ok(adminService.edit(id, dto));
+    }
 }

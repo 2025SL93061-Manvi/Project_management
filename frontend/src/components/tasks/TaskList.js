@@ -14,7 +14,7 @@ export default function TaskList() {
   const [editTask, setEditTask]   = useState(null);
   const [form, setForm] = useState({
     title:'', description:'', status:'TODO', priority:'MEDIUM',
-    startDate:'', endDate:'', assignedToId:'', projectId
+    startDate:'', endDate:'', assigneeIds: [], projectId
   });
   const [error, setError] = useState('');
 
@@ -31,7 +31,7 @@ export default function TaskList() {
   const openCreate = () => {
     setEditTask(null);
     setForm({ title:'', description:'', status:'TODO', priority:'MEDIUM',
-      startDate:'', endDate:'', assignedToId:'', projectId });
+      startDate:'', endDate:'', assigneeIds: [], projectId });
     setShowModal(true);
   };
 
@@ -41,18 +41,28 @@ export default function TaskList() {
       title: task.title, description: task.description || '',
       status: task.status, priority: task.priority,
       startDate: task.startDate || '', endDate: task.endDate || '',
-      assignedToId: task.assignedToId || '', projectId
+      assigneeIds: task.assigneeIds || [], projectId
     });
     setShowModal(true);
   };
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
+  const handleAssigneeToggle = (userId) => {
+    const id = Number(userId);
+    setForm(prev => ({
+      ...prev,
+      assigneeIds: prev.assigneeIds.includes(id)
+        ? prev.assigneeIds.filter(x => x !== id)
+        : [...prev.assigneeIds, id]
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     const payload = { ...form,
-      assignedToId: form.assignedToId ? Number(form.assignedToId) : null,
+      assigneeIds: form.assigneeIds.map(Number),
       startDate: form.startDate || null,
       endDate:   form.endDate   || null,
       projectId: Number(projectId)
@@ -110,7 +120,11 @@ export default function TaskList() {
                     <small style={{color:'#888'}}>{t.description}</small></td>
                   <td><span className={`badge badge-${t.status?.toLowerCase()}`}>{t.status}</span></td>
                   <td><span className={`badge badge-${t.priority?.toLowerCase()}`}>{t.priority}</span></td>
-                  <td>{t.assignedToName || 'Unassigned'}</td>
+                  <td>
+                    {t.assigneeNames && t.assigneeNames.length > 0
+                      ? t.assigneeNames.join(', ')
+                      : (t.assignedToName || 'Unassigned')}
+                  </td>
                   <td>{t.startDate || '—'}</td>
                   <td>{t.endDate || '—'}</td>
                   <td>
@@ -174,11 +188,27 @@ export default function TaskList() {
                 </div>
               </div>
               <div className="form-group">
-                <label>Assign To</label>
-                <select name="assignedToId" value={form.assignedToId} onChange={handleChange}>
-                  <option value="">Unassigned</option>
-                  {users.map(u => <option key={u.id} value={u.id}>{u.name} ({u.role})</option>)}
-                </select>
+                <label>Assign To (select multiple)</label>
+                <div style={{maxHeight:160, overflowY:'auto', border:'1px solid #ddd', borderRadius:6, padding:'8px 10px', textAlign:'left'}}>
+                  {users.length === 0 && <span style={{color:'#aaa',fontSize:13}}>No users available</span>}
+                  {users.map(u => (
+                    <label key={u.id} style={{display:'flex', alignItems:'center', justifyContent:'flex-start', gap:8, padding:'4px 0', cursor:'pointer', fontSize:14, fontWeight:'normal', textAlign:'left', width:'100%'}}>
+                      <input
+                        type="checkbox"
+                        checked={form.assigneeIds.includes(u.id)}
+                        onChange={() => handleAssigneeToggle(u.id)}
+                        style={{accentColor:'#3a3a7c', flexShrink:0, width:16, height:16, cursor:'pointer'}}
+                      />
+                      <span>{u.name}</span>
+                      <span style={{color:'#aaa',fontSize:12}}>({u.role})</span>
+                    </label>
+                  ))}
+                </div>
+                {form.assigneeIds.length > 0 && (
+                  <div style={{marginTop:6, fontSize:12, color:'#3a3a7c'}}>
+                    Selected: {users.filter(u => form.assigneeIds.includes(u.id)).map(u => u.name).join(', ')}
+                  </div>
+                )}
               </div>
               <div className="flex-gap">
                 <button type="submit" className="btn btn-primary">

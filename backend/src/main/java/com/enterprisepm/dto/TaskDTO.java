@@ -27,5 +27,8 @@ public class TaskDTO {
     private Long assignedToId;
     private String assignedToName;
 
+    private java.util.List<Long> assigneeIds;
+    private java.util.List<String> assigneeNames;
+
     private LocalDateTime createdAt;
 }
