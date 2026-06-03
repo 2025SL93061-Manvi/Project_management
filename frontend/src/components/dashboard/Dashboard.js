@@ -3,6 +3,42 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { taskService, milestoneService } from '../../services/taskService';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { Card, CardHeader, CardTitle } from '../ui/card';
+import { Alert } from '../ui/alert';
+import { Select } from '../ui/select';
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui/table';
+
+function toTitleCase(str) {
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+const STAT_CONFIG = {
+  blue:   { bg: 'bg-blue-50',   icon: 'text-blue-500',    border: 'border-blue-200',   ring: 'bg-blue-500' },
+  green:  { bg: 'bg-emerald-50',icon: 'text-emerald-500', border: 'border-emerald-200',ring: 'bg-emerald-500' },
+  orange: { bg: 'bg-orange-50', icon: 'text-orange-500',  border: 'border-orange-200', ring: 'bg-orange-500' },
+  red:    { bg: 'bg-red-50',    icon: 'text-red-500',      border: 'border-red-200',    ring: 'bg-red-500' },
+};
+
+function StatCard({ color, value, label, icon }) {
+  const cfg = STAT_CONFIG[color] || STAT_CONFIG.blue;
+  return (
+    <div className={`bg-white rounded-xl px-5 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_12px_rgba(0,0,0,0.05)] border border-gray-100 flex items-center gap-4`}>
+      <div className={`w-11 h-11 rounded-xl ${cfg.bg} flex items-center justify-center text-xl shrink-0`}>
+        {icon}
+      </div>
+      <div>
+        <div className="text-[26px] font-extrabold text-gray-900 leading-none">{value}</div>
+        <div className="text-[12px] text-gray-500 mt-0.5 font-medium">{label}</div>
+      </div>
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -42,211 +78,236 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="loading">Loading dashboard...</div>;
-  if (error)   return <div className="alert alert-error">{error}</div>;
-
-function toTitleCase(str) {
-  return str
-    .toLowerCase()
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
+  if (loading) return (
+    <div className="flex items-center justify-center py-20">
+      <div className="text-gray-400 text-[15px] animate-pulse">Loading dashboard…</div>
+    </div>
+  );
+  if (error) return <Alert variant="error">{error}</Alert>;
 
   return (
     <div>
-      <div className="page-header">
-        <h1 className="page-title">Welcome, {toTitleCase(user?.name)} 👋</h1>
-      </div>
-
-      <div className="stats-row">
-        <div className="stat-card blue">
-          <div className="stat-value">{data.totalProjects}</div>
-          <div className="stat-label">Total Projects</div>
-        </div>
-        <div className="stat-card green">
-          <div className="stat-value">{data.activeProjects}</div>
-          <div className="stat-label">Active Projects</div>
-        </div>
-        <div className="stat-card orange">
-          <div className="stat-value">{data.tasksInProgress}</div>
-          <div className="stat-label">Tasks In Progress</div>
-        </div>
-        <div className="stat-card red">
-          <div className="stat-value">{data.tasksTodo}</div>
-          <div className="stat-label">Tasks To Do</div>
-        </div>
-        <div className="stat-card green">
-          <div className="stat-value">{data.tasksDone}</div>
-          <div className="stat-label">Tasks Done</div>
+      {/* Page header */}
+      <div className="flex justify-between items-center mb-7">
+        <div>
+          <h1 className="text-[26px] font-extrabold text-[#1a237e] tracking-tight">
+            Welcome back, {toTitleCase(user?.name)} 👋
+          </h1>
+          <p className="text-[13px] text-gray-500 mt-0.5">Here's what's happening across your projects today.</p>
         </div>
       </div>
 
-      <div className="card">
-        <div className="card-header">
-          <span className="card-title">📁 Recent Projects</span>
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-7">
+        <StatCard color="blue"   value={data.totalProjects}   label="Total Projects"     icon="📁" />
+        <StatCard color="green"  value={data.activeProjects}  label="Active Projects"    icon="🟢" />
+        <StatCard color="orange" value={data.tasksInProgress} label="In Progress"        icon="⚡" />
+        <StatCard color="red"    value={data.tasksTodo}       label="To Do"              icon="📌" />
+        <StatCard color="green"  value={data.tasksDone}       label="Done"               icon="✅" />
+      </div>
+
+      {/* Recent Projects */}
+      <Card>
+        <CardHeader>
+          <CardTitle>📁 Recent Projects</CardTitle>
           {data.recentProjects?.length === 0 ? (
-            <button className="btn btn-primary btn-sm" onClick={() => navigate('/projects/new')}>+ New Project</button>
+            <Button variant="primary" size="sm" onClick={() => navigate('/projects/new')}>+ New Project</Button>
           ) : (
-            <button className="btn btn-primary btn-sm" onClick={() => navigate('/projects')}>View All</button>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/projects')}>View All →</Button>
           )}
-        </div>
-        <div className="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Project Name</th><th>Status</th><th>Owner</th>
-                <th>Start Date</th><th>End Date</th><th>Tasks</th><th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.recentProjects?.length === 0 && (
-                <tr><td colSpan={7} className="empty-msg">No projects yet</td></tr>
-              )}
-              {data.recentProjects?.map(p => (
-                <tr key={p.id}>
-                  <td><strong>{p.name}</strong></td>
-                  <td><span className={`badge badge-${p.status?.toLowerCase()}`}>{p.status}</span></td>
-                  <td>{p.ownerName}</td>
-                  <td>{p.startDate || '—'}</td>
-                  <td>{p.endDate || '—'}</td>
-                  <td>{p.totalTasks}</td>
-                  <td>
-                    <button className="btn btn-primary btn-sm" onClick={() => navigate(`/projects/${p.id}`)}>Open</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+        </CardHeader>
+        <Table>
+          <TableHead>
+            <tr>
+              <TableHeader>Project Name</TableHeader>
+              <TableHeader>Status</TableHeader>
+              <TableHeader>Owner</TableHeader>
+              <TableHeader>Start Date</TableHeader>
+              <TableHeader>End Date</TableHeader>
+              <TableHeader>Tasks</TableHeader>
+              <TableHeader>Action</TableHeader>
+            </tr>
+          </TableHead>
+          <TableBody>
+            {data.recentProjects?.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-10 text-gray-400">No projects yet</TableCell>
+              </TableRow>
+            )}
+            {data.recentProjects?.map(p => (
+              <TableRow key={p.id}>
+                <TableCell><span className="font-semibold text-gray-900">{p.name}</span></TableCell>
+                <TableCell><Badge value={p.status}>{p.status}</Badge></TableCell>
+                <TableCell className="text-gray-600">{p.ownerName}</TableCell>
+                <TableCell className="text-gray-500">{p.startDate || '—'}</TableCell>
+                <TableCell className="text-gray-500">{p.endDate || '—'}</TableCell>
+                <TableCell>
+                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-700 text-xs font-bold">{p.totalTasks}</span>
+                </TableCell>
+                <TableCell>
+                  <Button variant="ghost" size="sm" onClick={() => navigate(`/projects/${p.id}`)}>Open →</Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
 
-      <div className="card">
-        <div className="card-header">
-          <span className="card-title">✅ My Tasks</span>
-        </div>
-        <div className="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Task</th><th>Status</th><th>Priority</th><th>Due Date</th>
-                {isAdmin && <th>Change Status</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {data.myTasks?.length === 0 && (
-                <tr><td colSpan={isAdmin ? 5 : 4} className="empty-msg">No tasks assigned to you</td></tr>
-              )}
-              {data.myTasks?.map(t => (
-                <tr key={t.id}>
-                  <td>{t.title}</td>
-                  <td><span className={`badge badge-${t.status?.toLowerCase()}`}>{t.status}</span></td>
-                  <td><span className={`badge badge-${t.priority?.toLowerCase()}`}>{t.priority}</span></td>
-                  <td>{t.endDate || '—'}</td>
-                  {isAdmin && (
-                    <td>
-                      <select value={t.status} onChange={e => handleTaskStatusChange(t, e.target.value)}>
-                        <option value="TODO">To Do</option>
-                        <option value="IN_PROGRESS">In Progress</option>
-                        <option value="DONE">Done</option>
-                      </select>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* My Tasks */}
+      <Card>
+        <CardHeader>
+          <CardTitle>✅ My Tasks</CardTitle>
+        </CardHeader>
+        <Table>
+          <TableHead>
+            <tr>
+              <TableHeader>Task</TableHeader>
+              <TableHeader>Status</TableHeader>
+              <TableHeader>Priority</TableHeader>
+              <TableHeader>Due Date</TableHeader>
+              {isAdmin && <TableHeader>Change Status</TableHeader>}
+            </tr>
+          </TableHead>
+          <TableBody>
+            {data.myTasks?.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={isAdmin ? 5 : 4} className="text-center py-10 text-gray-400">No tasks assigned to you</TableCell>
+              </TableRow>
+            )}
+            {data.myTasks?.map(t => (
+              <TableRow key={t.id}>
+                <TableCell className="font-medium text-gray-800">{t.title}</TableCell>
+                <TableCell><Badge value={t.status}>{t.status}</Badge></TableCell>
+                <TableCell><Badge value={t.priority}>{t.priority}</Badge></TableCell>
+                <TableCell className="text-gray-500">{t.endDate || '—'}</TableCell>
+                {isAdmin && (
+                  <TableCell>
+                    <Select
+                      value={t.status}
+                      onChange={e => handleTaskStatusChange(t, e.target.value)}
+                      className="w-auto text-xs py-1"
+                    >
+                      <option value="TODO">To Do</option>
+                      <option value="IN_PROGRESS">In Progress</option>
+                      <option value="DONE">Done</option>
+                    </Select>
+                  </TableCell>
+                )}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
 
-      <div className="form-row">
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">🏁 Upcoming Milestones</span>
-            <small style={{color:'#888'}}>Next 30 days</small>
-          </div>
-          <table>
-            <thead>
+      {/* Milestones + Meetings */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+        <Card className="mb-0">
+          <CardHeader>
+            <CardTitle>🏁 Upcoming Milestones</CardTitle>
+            <span className="text-xs text-gray-400 font-medium">Next 30 days</span>
+          </CardHeader>
+          <Table>
+            <TableHead>
               <tr>
-                <th>Milestone</th><th>Due Date</th><th>Status</th>
-                {isAdmin && <th>Change Status</th>}
+                <TableHeader>Milestone</TableHeader>
+                <TableHeader>Due Date</TableHeader>
+                <TableHeader>Status</TableHeader>
+                {isAdmin && <TableHeader>Action</TableHeader>}
               </tr>
-            </thead>
-            <tbody>
+            </TableHead>
+            <TableBody>
               {data.upcomingMilestones?.length === 0 && (
-                <tr><td colSpan={isAdmin ? 4 : 3} className="empty-msg">No upcoming milestones</td></tr>
+                <TableRow>
+                  <TableCell colSpan={isAdmin ? 4 : 3} className="text-center py-10 text-gray-400">No upcoming milestones</TableCell>
+                </TableRow>
               )}
               {data.upcomingMilestones?.map(m => (
-                <tr key={m.id}>
-                  <td>{m.title}</td>
-                  <td>{m.dueDate || '—'}</td>
-                  <td>
-                    <span className={`badge ${m.completed ? 'badge-done' : 'badge-todo'}`}>
+                <TableRow key={m.id}>
+                  <TableCell className="font-medium text-gray-800">{m.title}</TableCell>
+                  <TableCell className="text-gray-500">{m.dueDate || '—'}</TableCell>
+                  <TableCell>
+                    <Badge value={m.completed ? 'done' : 'todo'}>
                       {m.completed ? 'Completed' : 'Pending'}
-                    </span>
-                  </td>
+                    </Badge>
+                  </TableCell>
                   {isAdmin && (
-                    <td>
-                      <button className={`btn btn-sm ${m.completed ? 'btn-warning' : 'btn-success'}`}
-                        onClick={() => handleMilestoneToggle(m)}>
+                    <TableCell>
+                      <Button
+                        variant={m.completed ? 'warning' : 'success'}
+                        size="sm"
+                        onClick={() => handleMilestoneToggle(m)}
+                      >
                         {m.completed ? 'Reopen' : 'Mark Done'}
-                      </button>
-                    </td>
+                      </Button>
+                    </TableCell>
                   )}
-                </tr>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </Card>
 
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Upcoming Meetings</span>
-            <small style={{color:'#888'}}>Next 7 days</small>
-          </div>
-          <table>
-            <thead>
-              <tr><th>Meeting</th><th>Date & Time</th><th>Location</th></tr>
-            </thead>
-            <tbody>
+        <Card className="mb-0">
+          <CardHeader>
+            <CardTitle>📅 Upcoming Meetings</CardTitle>
+            <span className="text-xs text-gray-400 font-medium">Next 7 days</span>
+          </CardHeader>
+          <Table>
+            <TableHead>
+              <tr>
+                <TableHeader>Meeting</TableHeader>
+                <TableHeader>Date &amp; Time</TableHeader>
+                <TableHeader>Location</TableHeader>
+              </tr>
+            </TableHead>
+            <TableBody>
               {data.upcomingMeetings?.length === 0 && (
-                <tr><td colSpan={3} className="empty-msg">No upcoming meetings</td></tr>
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center py-10 text-gray-400">No upcoming meetings</TableCell>
+                </TableRow>
               )}
               {data.upcomingMeetings?.map(m => (
-                <tr key={m.id}>
-                  <td>{m.title}</td>
-                  <td>{m.meetingDate ? new Date(m.meetingDate).toLocaleString() : '—'}</td>
-                  <td>{m.location || '—'}</td>
-                </tr>
+                <TableRow key={m.id}>
+                  <TableCell className="font-medium text-gray-800">{m.title}</TableCell>
+                  <TableCell className="text-gray-500">{m.meetingDate ? new Date(m.meetingDate).toLocaleString() : '—'}</TableCell>
+                  <TableCell className="text-gray-500">{m.location || '—'}</TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </Card>
       </div>
 
-      <div className="card">
-        <div className="card-header">
-          <span className="card-title">Upcoming Holidays</span>
-          <small style={{color:'#888'}}>Next 30 days</small>
-        </div>
-        <table>
-          <thead>
-            <tr><th>Holiday</th><th>Date</th><th>Day</th></tr>
-          </thead>
-          <tbody>
+      {/* Holidays */}
+      <Card>
+        <CardHeader>
+          <CardTitle>🎉 Upcoming Holidays</CardTitle>
+          <span className="text-xs text-gray-400 font-medium">Next 30 days</span>
+        </CardHeader>
+        <Table>
+          <TableHead>
+            <tr>
+              <TableHeader>Holiday</TableHeader>
+              <TableHeader>Date</TableHeader>
+              <TableHeader>Day</TableHeader>
+            </tr>
+          </TableHead>
+          <TableBody>
             {(!data.upcomingHolidays || data.upcomingHolidays.length === 0) && (
-              <tr><td colSpan={3} className="empty-msg">No holidays in the next 30 days</td></tr>
+              <TableRow>
+                <TableCell colSpan={3} className="text-center py-10 text-gray-400">No holidays in the next 30 days</TableCell>
+              </TableRow>
             )}
             {data.upcomingHolidays?.map(h => (
-              <tr key={h.id}>
-                <td>{h.name}</td>
-                <td>{h.holidayDate}</td>
-                <td>{new Date(h.holidayDate + 'T00:00:00').toLocaleDateString('default', { weekday: 'long' })}</td>
-              </tr>
+              <TableRow key={h.id}>
+                <TableCell className="font-medium text-gray-800">{h.name}</TableCell>
+                <TableCell className="text-gray-500">{h.holidayDate}</TableCell>
+                <TableCell className="text-gray-500">{new Date(h.holidayDate + 'T00:00:00').toLocaleDateString('default', { weekday: 'long' })}</TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
+      </Card>
     </div>
   );
 }

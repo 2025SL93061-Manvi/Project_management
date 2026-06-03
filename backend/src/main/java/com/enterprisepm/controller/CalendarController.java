@@ -1,5 +1,6 @@
 package com.enterprisepm.controller;
 
+import com.enterprisepm.dto.CalendarEventDTO;
 import com.enterprisepm.model.Holiday;
 import com.enterprisepm.service.CalendarService;
 import lombok.RequiredArgsConstructor;
@@ -31,5 +32,10 @@ public class CalendarController {
     public ResponseEntity<String> deleteHoliday(@PathVariable Long id) {
         calendarService.deleteHoliday(id);
         return ResponseEntity.ok("Holiday deleted");
+    }
+
+    @GetMapping("/events")
+    public ResponseEntity<List<CalendarEventDTO>> getAllEvents() {
+        return ResponseEntity.ok(calendarService.getAllEvents());
     }
 }

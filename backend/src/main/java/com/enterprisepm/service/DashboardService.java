@@ -48,6 +48,7 @@ public class DashboardService {
         dashboard.setCompletedProjects((int) myProjects.stream()
                 .filter(p -> p.getStatus() == ProjectStatus.COMPLETED).count());
         dashboard.setRecentProjects(myProjects.stream()
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
                 .limit(5).map(projectService::toDTO).collect(Collectors.toList()));
 
         List<Task> myTasks = taskRepository.findByAssignedToOrAssigneesContaining(user);

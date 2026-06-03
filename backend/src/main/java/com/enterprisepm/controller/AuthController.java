@@ -11,6 +11,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -36,5 +38,15 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<AuthResponse> me(@AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(authService.getMe(userDetails.getUsername()));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<AuthResponse> updateMe(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody Map<String, String> body) {
+        return ResponseEntity.ok(authService.updateMe(
+                userDetails.getUsername(),
+                body.get("name"),
+                body.get("email")));
     }
 }

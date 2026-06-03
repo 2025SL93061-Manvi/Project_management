@@ -2,6 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { meetingService } from '../../services/taskService';
 import { useAuth } from '../../context/AuthContext';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
+import { Label } from '../ui/label';
+import { Alert } from '../ui/alert';
+import { Card } from '../ui/card';
+import { FormGroup } from '../ui/form-group';
+import { Modal } from '../ui/modal';
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui/table';
 
 export default function MeetingScheduler() {
   const { id: projectId } = useParams();
@@ -63,93 +72,90 @@ export default function MeetingScheduler() {
     setMeetings(meetings.filter(m => m.id !== id));
   };
 
-  if (loading) return <div className="loading">Loading meetings...</div>;
+  if (loading) return (
+    <div className="flex items-center justify-center py-20">
+      <div className="text-gray-400 animate-pulse">Loading meetings…</div>
+    </div>
+  );
 
   return (
     <div>
-      <div className="page-header">
-        <h1 className="page-title">📅 Meetings</h1>
-        {canManage && <button className="btn btn-primary" onClick={openCreate}>+ Schedule Meeting</button>}
-      </div>
-
-      <div className="card">
-        <div className="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Title</th><th>Description</th><th>Date & Time</th>
-                <th>Location</th><th>Organizer</th><th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {meetings.length === 0 && (
-                <tr><td colSpan={6} className="empty-msg">No meetings scheduled yet</td></tr>
-              )}
-              {meetings.map(m => (
-                <tr key={m.id}>
-                  <td><strong>{m.title}</strong></td>
-                  <td>{m.description || '—'}</td>
-                  <td>{m.meetingDate ? new Date(m.meetingDate).toLocaleString() : '—'}</td>
-                  <td>{m.location || '—'}</td>
-                  <td>{m.organizerName || '—'}</td>
-                  <td>
-                    <div className="flex-gap">
-                      {canManage && (
-                        <>
-                          <button className="btn btn-warning btn-sm" onClick={() => openEdit(m)}>Edit</button>
-                          <button className="btn btn-danger btn-sm" onClick={() => handleDelete(m.id)}>Delete</button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="flex justify-between items-center mb-7">
+        <div>
+          <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight">📅 Meetings</h1>
+          <p className="text-[13px] text-gray-500 mt-0.5">{meetings.length} meeting{meetings.length !== 1 ? 's' : ''}</p>
         </div>
+        {canManage && <Button variant="primary" onClick={openCreate}>+ Schedule Meeting</Button>}
       </div>
 
-      {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <span className="modal-title">{editItem ? 'Edit Meeting' : 'Schedule Meeting'}</span>
-              <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
-            </div>
-            {error && <div className="alert alert-error">{error}</div>}
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label>Title *</label>
-                <input name="title" value={form.title} onChange={handleChange} required />
-              </div>
-              <div className="form-group">
-                <label>Description</label>
-                <textarea name="description" value={form.description} onChange={handleChange} rows={2} />
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Date & Time *</label>
-                  <input type="datetime-local" name="meetingDate"
-                    value={form.meetingDate} onChange={handleChange} required />
-                </div>
-                <div className="form-group">
-                  <label>Location</label>
-                  <input name="location" value={form.location} onChange={handleChange}
-                    placeholder="e.g. Zoom, Room A" />
-                </div>
-              </div>
-              <div className="flex-gap">
-                <button type="submit" className="btn btn-primary">
-                  {editItem ? 'Update' : 'Schedule'}
-                </button>
-                <button type="button" className="btn btn-warning" onClick={() => setShowModal(false)}>
-                  Cancel
-                </button>
-              </div>
-            </form>
+      <Card>
+        <Table>
+          <TableHead>
+            <tr>
+              <TableHeader>Title</TableHeader>
+              <TableHeader>Description</TableHeader>
+              <TableHeader>Date &amp; Time</TableHeader>
+              <TableHeader>Location</TableHeader>
+              <TableHeader>Organizer</TableHeader>
+              <TableHeader>Actions</TableHeader>
+            </tr>
+          </TableHead>
+          <TableBody>
+            {meetings.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-12 text-gray-400">No meetings scheduled yet</TableCell>
+              </TableRow>
+            )}
+            {meetings.map(m => (
+              <TableRow key={m.id}>
+                <TableCell><span className="font-semibold text-gray-900">{m.title}</span></TableCell>
+                <TableCell className="text-gray-500 max-w-[160px] truncate">{m.description || '—'}</TableCell>
+                <TableCell className="text-gray-600">{m.meetingDate ? new Date(m.meetingDate).toLocaleString() : '—'}</TableCell>
+                <TableCell className="text-gray-500">{m.location || '—'}</TableCell>
+                <TableCell className="text-gray-600">{m.organizerName || '—'}</TableCell>
+                <TableCell>
+                  <div className="flex gap-1.5 items-center">
+                    {canManage && (
+                      <>
+                        <Button variant="ghost" size="sm" onClick={() => openEdit(m)}>Edit</Button>
+                        <Button variant="danger" size="sm" onClick={() => handleDelete(m.id)}>Delete</Button>
+                      </>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+
+      <Modal show={showModal} onClose={() => setShowModal(false)} title={editItem ? 'Edit Meeting' : 'Schedule Meeting'}>
+        {error && <Alert variant="error">{error}</Alert>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <FormGroup>
+            <Label>Title *</Label>
+            <Input name="title" value={form.title} onChange={handleChange} placeholder="Meeting title" required />
+          </FormGroup>
+          <FormGroup>
+            <Label>Description</Label>
+            <Textarea name="description" value={form.description} onChange={handleChange} rows={2} placeholder="Optional agenda…" />
+          </FormGroup>
+          <div className="grid grid-cols-2 gap-4">
+            <FormGroup>
+              <Label>Date &amp; Time *</Label>
+              <Input type="datetime-local" name="meetingDate" value={form.meetingDate} onChange={handleChange} required />
+            </FormGroup>
+            <FormGroup>
+              <Label>Location</Label>
+              <Input name="location" value={form.location} onChange={handleChange} placeholder="e.g. Zoom, Room A" />
+            </FormGroup>
           </div>
-        </div>
-      )}
+          <div className="flex gap-3 pt-2 border-t border-gray-100">
+            <Button type="submit" variant="primary">{editItem ? 'Update Meeting' : 'Schedule Meeting'}</Button>
+            <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

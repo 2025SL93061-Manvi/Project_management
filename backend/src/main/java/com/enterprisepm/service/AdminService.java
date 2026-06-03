@@ -1,9 +1,11 @@
 package com.enterprisepm.service;
 
 import com.enterprisepm.dto.ComplaintDTO;
+import com.enterprisepm.dto.UserDTO;
 import com.enterprisepm.model.Complaint;
 import com.enterprisepm.model.ComplaintStatus;
 import com.enterprisepm.model.ComplaintType;
+import com.enterprisepm.model.Role;
 import com.enterprisepm.model.User;
 import com.enterprisepm.repository.ComplaintRepository;
 import com.enterprisepm.repository.UserRepository;
@@ -57,8 +59,13 @@ public class AdminService {
         return toDTO(saved);
     }
 
-    public ComplaintDTO edit(Long id, ComplaintDTO dto) {
+    public ComplaintDTO edit(Long id, ComplaintDTO dto, String userEmail) {
         Complaint complaint = findComplaintOrThrow(id);
+        User requester = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (!complaint.getRaisedBy().getId().equals(requester.getId())) {
+            throw new RuntimeException("Not authorised to edit this complaint");
+        }
         if (dto.getTitle() != null && !dto.getTitle().isBlank()) {
             complaint.setTitle(dto.getTitle());
         }
@@ -69,8 +76,29 @@ public class AdminService {
         return toDTO(complaintRepository.save(complaint));
     }
 
+    public void deleteComplaint(Long id) {
+        Complaint complaint = findComplaintOrThrow(id);
+        complaint.setStatus(ComplaintStatus.DELETED);
+        complaintRepository.save(complaint);
+    }
+
     public List<User> getAllUsers() {
         return userRepository.findAll();
+    }
+
+    public User updateUser(Long userId, UserDTO dto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (dto.getName() != null && !dto.getName().isBlank()) {
+            user.setName(dto.getName());
+        }
+        if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
+            user.setEmail(dto.getEmail());
+        }
+        if (dto.getRole() != null) {
+            user.setRole(Role.valueOf(dto.getRole().toUpperCase()));
+        }
+        return userRepository.save(user);
     }
 
     public void toggleUserStatus(Long userId) {
@@ -78,7 +106,6 @@ public class AdminService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         user.setEnabled(!user.isEnabled());
         userRepository.save(user);
-        // Notify the user about their account status change
         emailService.sendAccountStatusEmail(user.getEmail(), user.getName(), user.isEnabled());
     }
 
@@ -87,7 +114,7 @@ public class AdminService {
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
     }
 
-    private ComplaintDTO toDTO(Complaint c) {
+    public ComplaintDTO toDTO(Complaint c) {
         ComplaintDTO dto = new ComplaintDTO();
         dto.setId(c.getId());
         dto.setTitle(c.getTitle());

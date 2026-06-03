@@ -2,6 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { fileService } from '../../services/fileService';
 import { useAuth } from '../../context/AuthContext';
+import { Button } from '../ui/button';
+import { Alert } from '../ui/alert';
+import { Card } from '../ui/card';
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui/table';
 
 export default function FileStorage() {
   const { id: projectId } = useParams();
@@ -82,59 +86,80 @@ export default function FileStorage() {
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
-  if (loading) return <div className="loading">Loading files...</div>;
+  const fileIcon = (type) => {
+    if (!type) return '📄';
+    if (type.startsWith('image/')) return '🖼️';
+    if (type === 'application/pdf') return '📕';
+    return '📄';
+  };
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-20">
+      <div className="text-gray-400 animate-pulse">Loading files…</div>
+    </div>
+  );
 
   return (
     <div>
-      <div className="page-header">
-        <h1 className="page-title">📂 File Storage</h1>
-        <label className="btn btn-primary" style={{cursor:'pointer'}}>
-          {uploading ? 'Uploading...' : '+ Upload File'}
-          <input type="file" style={{display:'none'}} onChange={handleUpload} disabled={uploading} />
+      <div className="flex justify-between items-center mb-7">
+        <div>
+          <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight">📂 File Storage</h1>
+          <p className="text-[13px] text-gray-500 mt-0.5">{files.length} file{files.length !== 1 ? 's' : ''} · Max 10 MB per file</p>
+        </div>
+        <label className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-[13px] font-semibold cursor-pointer transition-all duration-150 shadow-sm ${uploading ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-[#3f51b5] text-white hover:bg-[#3547a8] hover:shadow-md'}`}>
+          {uploading ? '⏳ Uploading…' : '⬆ Upload File'}
+          <input type="file" className="hidden" onChange={handleUpload} disabled={uploading} />
         </label>
       </div>
 
-      {error && <div className="alert alert-error">{error}</div>}
+      {error && <Alert variant="error">{error}</Alert>}
 
-      <div className="card">
-        <div className="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>File Name</th><th>Type</th><th>Size</th>
-                <th>Uploaded By</th><th>Date</th><th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {files.length === 0 && (
-                <tr><td colSpan={6} className="empty-msg">No files uploaded yet</td></tr>
-              )}
-              {files.map(f => (
-                <tr key={f.id}>
-                  <td>
-                    {f.fileType?.startsWith('image/') ? '🖼️' : f.fileType === 'application/pdf' ? '📕' : '📄'} {f.fileName}
-                  </td>
-                  <td>{f.fileType || '—'}</td>
-                  <td>{formatSize(f.fileSize)}</td>
-                  <td>{f.uploadedBy?.name || '—'}</td>
-                  <td>{f.createdAt ? new Date(f.createdAt).toLocaleDateString() : '—'}</td>
-                  <td>
-                    <div className="flex-gap">
-                      {isViewable(f.fileType) && (
-                        <button className="btn btn-primary btn-sm" onClick={() => handleView(f)}>View</button>
-                      )}
-                      <button className="btn btn-success btn-sm" onClick={() => handleDownload(f)}>Download</button>
-                      {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
-                        <button className="btn btn-danger btn-sm" onClick={() => handleDelete(f.id)}>Delete</button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <Card>
+        <Table>
+          <TableHead>
+            <tr>
+              <TableHeader>File Name</TableHeader>
+              <TableHeader>Type</TableHeader>
+              <TableHeader>Size</TableHeader>
+              <TableHeader>Uploaded By</TableHeader>
+              <TableHeader>Date</TableHeader>
+              <TableHeader>Actions</TableHeader>
+            </tr>
+          </TableHead>
+          <TableBody>
+            {files.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-12 text-gray-400">No files uploaded yet</TableCell>
+              </TableRow>
+            )}
+            {files.map(f => (
+              <TableRow key={f.id}>
+                <TableCell>
+                  <span className="flex items-center gap-2">
+                    <span className="text-lg">{fileIcon(f.fileType)}</span>
+                    <span className="font-medium text-gray-800">{f.fileName}</span>
+                  </span>
+                </TableCell>
+                <TableCell className="text-gray-500 text-xs">{f.fileType || '—'}</TableCell>
+                <TableCell className="text-gray-500">{formatSize(f.fileSize)}</TableCell>
+                <TableCell className="text-gray-600">{f.uploadedBy?.name || '—'}</TableCell>
+                <TableCell className="text-gray-500">{f.createdAt ? new Date(f.createdAt).toLocaleDateString() : '—'}</TableCell>
+                <TableCell>
+                  <div className="flex gap-1.5 items-center">
+                    {isViewable(f.fileType) && (
+                      <Button variant="ghost" size="sm" onClick={() => handleView(f)}>View</Button>
+                    )}
+                    <Button variant="success" size="sm" onClick={() => handleDownload(f)}>Download</Button>
+                    {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+                      <Button variant="danger" size="sm" onClick={() => handleDelete(f.id)}>Delete</Button>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import com.enterprisepm.service.TaskService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -30,11 +31,13 @@ public class TaskController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','DEVELOPER')")
     public ResponseEntity<TaskDTO> create(@Valid @RequestBody TaskDTO dto) {
         return ResponseEntity.ok(taskService.create(dto));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','DEVELOPER')")
     public ResponseEntity<TaskDTO> update(
             @PathVariable Long id,
             @Valid @RequestBody TaskDTO dto) {
@@ -42,6 +45,7 @@ public class TaskController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','DEVELOPER')")
     public ResponseEntity<String> delete(@PathVariable Long id) {
         taskService.delete(id);
         return ResponseEntity.ok("Task deleted");

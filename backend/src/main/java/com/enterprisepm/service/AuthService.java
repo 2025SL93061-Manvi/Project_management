@@ -43,6 +43,20 @@ public class AuthService {
         return new AuthResponse(null, user.getName(), user.getEmail(), user.getRole().name());
     }
 
+    public AuthResponse updateMe(String email, String newName, String newEmail) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (newName != null && !newName.isBlank()) user.setName(newName);
+        if (newEmail != null && !newEmail.isBlank() && !newEmail.equals(email)) {
+            if (userRepository.existsByEmail(newEmail)) {
+                throw new RuntimeException("Email already in use");
+            }
+            user.setEmail(newEmail);
+        }
+        userRepository.save(user);
+        return new AuthResponse(null, user.getName(), user.getEmail(), user.getRole().name());
+    }
+
     public AuthResponse login(LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())

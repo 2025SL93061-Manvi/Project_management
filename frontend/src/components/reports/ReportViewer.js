@@ -3,6 +3,9 @@ import { useParams } from 'react-router-dom';
 import { reportService } from '../../services/fileService';
 import { projectService } from '../../services/projectService';
 import { taskService, milestoneService } from '../../services/taskService';
+import { Button } from '../ui/button';
+import { Alert } from '../ui/alert';
+import { Card, CardHeader, CardTitle } from '../ui/card';
 
 export default function ReportViewer() {
   const { id: projectId } = useParams();
@@ -102,16 +105,12 @@ export default function ReportViewer() {
     td    { padding: 7px 10px; border-bottom: 1px solid #eee; vertical-align: top; }
     tr:nth-child(even) td { background: #f9f9f9; }
     .info-table td:first-child { font-weight: bold; width: 140px; color: #555; }
-    @media print {
-      body { margin: 16px; }
-      button { display: none; }
-    }
+    @media print { body { margin: 16px; } button { display: none; } }
   </style>
 </head>
 <body>
   <h1>Project Status Report</h1>
   <div class="meta">Generated on ${new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })}</div>
-
   <h2>Project Summary</h2>
   <table class="info-table">
     <tr><td>Project Name</td><td>${project.name}</td></tr>
@@ -121,7 +120,6 @@ export default function ReportViewer() {
     <tr><td>Start Date</td><td>${project.startDate || '—'}</td></tr>
     <tr><td>End Date</td><td>${project.endDate || '—'}</td></tr>
   </table>
-
   <h2>Task Overview</h2>
   <div class="summary-grid">
     <div class="summary-box"><div class="val">${tasks.length}</div><div class="lbl">Total Tasks</div></div>
@@ -129,13 +127,11 @@ export default function ReportViewer() {
     <div class="summary-box"><div class="val">${inProgress}</div><div class="lbl">In Progress</div></div>
     <div class="summary-box"><div class="val">${todo}</div><div class="lbl">To Do</div></div>
   </div>
-
   <h2>Task List</h2>
   <table>
     <thead><tr><th>Title</th><th>Description</th><th>Status</th><th>Priority</th><th>Assigned To</th><th>Start</th><th>Due</th></tr></thead>
     <tbody>${taskRows || '<tr><td colspan="7">No tasks</td></tr>'}</tbody>
   </table>
-
   <h2>Milestones</h2>
   <table>
     <thead><tr><th>Title</th><th>Due Date</th><th>Status</th></tr></thead>
@@ -158,41 +154,48 @@ export default function ReportViewer() {
     }
   };
 
+  const busy = loading || emailing;
+
   return (
     <div>
-      <div className="page-header">
-        <h1 className="page-title">Project Report</h1>
+      <div className="flex justify-between items-center mb-7">
+        <div>
+          <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight">📊 Project Report</h1>
+          <p className="text-[13px] text-gray-500 mt-0.5">Export or print a full project status report</p>
+        </div>
       </div>
 
-      <div className="card">
-        <div className="card-header">
-          <span className="card-title">Export Project Status Report</span>
-        </div>
-        <p style={{marginBottom:16, color:'#555'}}>
-          Generate a full project status report as an Excel file (.xlsx). The report includes:
+      <Card>
+        <CardHeader>
+          <CardTitle>Export Project Status Report</CardTitle>
+        </CardHeader>
+        <p className="text-[13px] text-gray-600 mb-3">
+          Generate a full project status report. The report includes:
         </p>
-        <ul style={{marginLeft:20, marginBottom:24, color:'#555', lineHeight:2}}>
+        <ul className="text-[13px] text-gray-600 space-y-1 mb-6 ml-4 list-disc">
           <li>Project summary (name, status, dates, owner)</li>
           <li>Task count breakdown (Todo / In Progress / Done)</li>
           <li>Full task list with assignees and due dates</li>
         </ul>
-        {error   && <div className="alert alert-error">{error}</div>}
-        {success && <div className="alert alert-success">{success}</div>}
-        <div className="flex-gap" style={{flexWrap:'wrap'}}>
-          <button className="btn btn-success" onClick={handleDownload} disabled={loading || emailing}>
-            {loading ? 'Generating...' : 'Download Excel Report'}
-          </button>
-          <button className="btn btn-primary" onClick={handleEmail} disabled={loading || emailing}>
-            {emailing ? 'Sending...' : 'Email Report to Me'}
-          </button>
-          <button className="btn btn-secondary" onClick={handlePrint} disabled={loading || emailing}>
-            Print Report
-          </button>
+
+        {error   && <Alert variant="error">{error}</Alert>}
+        {success && <Alert variant="success">{success}</Alert>}
+
+        <div className="flex flex-wrap gap-3">
+          <Button variant="success" onClick={handleDownload} disabled={busy}>
+            {loading ? '⏳ Generating…' : '⬇ Download Excel'}
+          </Button>
+          <Button variant="primary" onClick={handleEmail} disabled={busy}>
+            {emailing ? '⏳ Sending…' : '✉ Email Report'}
+          </Button>
+          <Button variant="secondary" onClick={handlePrint} disabled={busy}>
+            🖨 Print Report
+          </Button>
         </div>
-        <p style={{marginTop:16, fontSize:12, color:'#aaa'}}>
+        <p className="mt-5 text-xs text-gray-400 border-t border-gray-100 pt-4">
           Weekly and monthly reports are automatically emailed to project owners every Monday and on the 1st of each month.
         </p>
-      </div>
+      </Card>
     </div>
   );
 }

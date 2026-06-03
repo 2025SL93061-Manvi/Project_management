@@ -2,13 +2,23 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { projectService } from '../../services/projectService';
 import { useAuth } from '../../context/AuthContext';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { Alert } from '../ui/alert';
+import { Card } from '../ui/card';
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui/table';
+
+const STATUS_FILTERS = ['All', 'ACTIVE', 'PLANNING', 'COMPLETED'];
+
+const STATUS_LABELS = { All: 'All', ACTIVE: 'Active', PLANNING: 'Planning', COMPLETED: 'Completed' };
 
 export default function ProjectList() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [projects, setProjects] = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState('');
+  const [projects, setProjects]     = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
 
   useEffect(() => {
     const fetch = user?.role === 'ADMIN'
@@ -30,59 +40,95 @@ export default function ProjectList() {
     }
   };
 
-  if (loading) return <div className="loading">Loading projects...</div>;
-  if (error)   return <div className="alert alert-error">{error}</div>;
+  const filtered = statusFilter === 'All'
+    ? projects
+    : projects.filter(p => p.status === statusFilter);
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-20">
+      <div className="text-gray-400 text-[15px] animate-pulse">Loading projects…</div>
+    </div>
+  );
+  if (error) return <Alert variant="error">{error}</Alert>;
 
   return (
     <div>
-      <div className="page-header">
-        <h1 className="page-title">📁 Projects</h1>
-        {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
-          <button className="btn btn-primary" onClick={() => navigate('/projects/new')}>+ New Project</button>
-        )}
-      </div>
-
-      <div className="card">
-        <div className="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th><th>Description</th><th>Status</th><th>Owner</th>
-                <th>Start Date</th><th>End Date</th><th>Tasks</th><th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {projects.length === 0 && (
-                <tr><td colSpan={8} className="empty-msg">No projects found</td></tr>
-              )}
-              {projects.map(p => (
-                <tr key={p.id}>
-                  <td><strong>{p.name}</strong></td>
-                  <td style={{maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
-                    {p.description || '—'}
-                  </td>
-                  <td><span className={`badge badge-${p.status?.toLowerCase()}`}>{p.status}</span></td>
-                  <td>{p.ownerName}</td>
-                  <td>{p.startDate || '—'}</td>
-                  <td>{p.endDate || '—'}</td>
-                  <td>{p.totalTasks}</td>
-                  <td>
-                    <div className="flex-gap">
-                      <button className="btn btn-primary btn-sm" onClick={() => navigate(`/projects/${p.id}`)}>View</button>
-                      {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
-                        <>
-                          <button className="btn btn-warning btn-sm" onClick={() => navigate(`/projects/${p.id}/edit`)}>Edit</button>
-                          <button className="btn btn-danger btn-sm" onClick={() => handleDelete(p.id)}>Delete</button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="flex justify-between items-center mb-7">
+        <div>
+          <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight">📁 Projects</h1>
+          <p className="text-[13px] text-gray-500 mt-0.5">{filtered.length} project{filtered.length !== 1 ? 's' : ''}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+            {STATUS_FILTERS.map(s => (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                className={`px-3 py-1 rounded-md text-[13px] font-medium transition-colors ${
+                  statusFilter === s
+                    ? 'bg-white text-[#1a237e] shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {STATUS_LABELS[s]}
+              </button>
+            ))}
+          </div>
+          {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+            <Button variant="primary" onClick={() => navigate('/projects/new')}>+ New Project</Button>
+          )}
         </div>
       </div>
+
+      <Card>
+        <Table>
+          <TableHead>
+            <tr>
+              <TableHeader>Name</TableHeader>
+              <TableHeader>Description</TableHeader>
+              <TableHeader>Status</TableHeader>
+              <TableHeader>Owner</TableHeader>
+              <TableHeader>Start Date</TableHeader>
+              <TableHeader>End Date</TableHeader>
+              <TableHeader>Tasks</TableHeader>
+              <TableHeader>Actions</TableHeader>
+            </tr>
+          </TableHead>
+          <TableBody>
+            {filtered.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-12 text-gray-400">No projects found</TableCell>
+              </TableRow>
+            )}
+            {filtered.map(p => (
+              <TableRow key={p.id}>
+                <TableCell><span className="font-semibold text-gray-900">{p.name}</span></TableCell>
+                <TableCell className="max-w-[180px] overflow-hidden text-ellipsis whitespace-nowrap text-gray-500">
+                  {p.description || '—'}
+                </TableCell>
+                <TableCell><Badge value={p.status}>{p.status}</Badge></TableCell>
+                <TableCell className="text-gray-600">{p.ownerName}</TableCell>
+                <TableCell className="text-gray-500">{p.startDate || '—'}</TableCell>
+                <TableCell className="text-gray-500">{p.endDate || '—'}</TableCell>
+                <TableCell>
+                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-700 text-xs font-bold">{p.totalTasks}</span>
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-1.5 items-center">
+                    <Button variant="ghost" size="sm" onClick={() => navigate(`/projects/${p.id}`)}>View</Button>
+                    {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+                      <>
+                        <Button variant="warning" size="sm" onClick={() => navigate(`/projects/${p.id}/edit`)}>Edit</Button>
+                        <Button variant="danger"  size="sm" onClick={() => handleDelete(p.id)}>Delete</Button>
+                      </>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
     </div>
   );
 }

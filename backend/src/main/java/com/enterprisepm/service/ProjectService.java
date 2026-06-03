@@ -42,9 +42,15 @@ public class ProjectService {
         return toDTO(project);
     }
 
-    public ProjectDTO create(ProjectDTO dto, String ownerEmail) {
-        User owner = userRepository.findByEmail(ownerEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public ProjectDTO create(ProjectDTO dto, String fallbackEmail) {
+        User owner;
+        if (dto.getOwnerId() != null) {
+            owner = userRepository.findById(dto.getOwnerId())
+                    .orElseThrow(() -> new RuntimeException("Selected owner not found"));
+        } else {
+            owner = userRepository.findByEmail(fallbackEmail)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+        }
         Project project = new Project();
         project.setName(dto.getName());
         project.setDescription(dto.getDescription());
@@ -68,6 +74,11 @@ public class ProjectService {
         project.setStatus(ProjectStatus.valueOf(dto.getStatus()));
         project.setStartDate(dto.getStartDate());
         project.setEndDate(dto.getEndDate());
+        if (dto.getOwnerId() != null) {
+            User newOwner = userRepository.findById(dto.getOwnerId())
+                    .orElseThrow(() -> new RuntimeException("Selected owner not found"));
+            project.setOwner(newOwner);
+        }
         if (dto.getMemberIds() != null) {
             List<User> members = userRepository.findAllById(dto.getMemberIds());
             project.setMembers(members);
@@ -100,6 +111,16 @@ public class ProjectService {
         dto.setEndDate(project.getEndDate());
         dto.setOwnerName(project.getOwner() != null ? project.getOwner().getName() : "");
         dto.setOwnerId(project.getOwner() != null ? project.getOwner().getId() : null);
+        if (project.getMembers() != null) {
+            dto.setMemberIds(project.getMembers().stream()
+                    .distinct()
+                    .map(User::getId)
+                    .collect(Collectors.toList()));
+            dto.setMemberNames(project.getMembers().stream()
+                    .distinct()
+                    .map(User::getName)
+                    .collect(Collectors.toList()));
+        }
         dto.setTotalTasks((int) taskRepository.countByProjectId(project.getId()));
         dto.setCreatedAt(project.getCreatedAt());
         return dto;

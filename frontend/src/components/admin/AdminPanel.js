@@ -1,26 +1,56 @@
 import React, { useEffect, useState } from 'react';
 import { adminService } from '../../services/adminService';
 import { useAuth } from '../../context/AuthContext';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
+import { Label } from '../ui/label';
+import { Select } from '../ui/select';
+import { Badge } from '../ui/badge';
+import { RoleBadge } from '../ui/role-badge';
+import { Alert } from '../ui/alert';
+import { Card, CardHeader, CardTitle } from '../ui/card';
+import { FormGroup } from '../ui/form-group';
+import { Modal } from '../ui/modal';
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui/table';
 
 export default function AdminPanel() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
 
-  const [tab, setTab] = useState('users');
+  const [tab, setTab] = useState(isAdmin ? 'users' : 'my');
 
-  const [users, setUsers]             = useState([]);
+  // ── User management state (admin) ────────────────────────────────────────
+  const [users, setUsers]               = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
+  const [roleFilter, setRoleFilter]     = useState('ALL');
+  const [editUser, setEditUser]         = useState(null);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const EMPTY_USER_FORM = { name: '', email: '', role: 'DEVELOPER' };
+  const [userForm, setUserForm]         = useState(EMPTY_USER_FORM);
+  const [userError, setUserError]       = useState('');
 
-  const [complaints, setComplaints]   = useState([]);
-  const [compLoading, setCompLoading] = useState(false);
-  const [showModal, setShowModal]     = useState(false);
+  // ── All complaints state (admin) ─────────────────────────────────────────
+  const [complaints, setComplaints]     = useState([]);
+  const [compLoading, setCompLoading]   = useState(false);
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [typeFilter, setTypeFilter]     = useState('ALL');
+
+  // ── My complaints state (all users) ──────────────────────────────────────
+  const [myComplaints, setMyComplaints] = useState([]);
+  const [myLoading, setMyLoading]       = useState(false);
+  const [myStatusFilter, setMyStatusFilter] = useState('ALL');
+  const [myTypeFilter, setMyTypeFilter] = useState('ALL');
+
+  // ── Create / edit modal ───────────────────────────────────────────────────
+  const [showModal, setShowModal]         = useState(false);
   const [editComplaint, setEditComplaint] = useState(null);
-
-  const EMPTY_FORM = { title:'', description:'', type:'COMPLAINT' };
+  const EMPTY_FORM = { title: '', description: '', type: 'COMPLAINT' };
   const [form, setForm] = useState(EMPTY_FORM);
   const [error, setError] = useState('');
+  const [deleteTarget, setDeleteTarget]   = useState(null);
 
-  const closeModal = () => { setShowModal(false); setEditComplaint(null); };
+  const closeModal = () => { setShowModal(false); setEditComplaint(null); setForm(EMPTY_FORM); setError(''); };
 
   useEffect(() => {
     if (tab === 'users' && isAdmin) {
@@ -29,31 +59,74 @@ export default function AdminPanel() {
         .then(res => setUsers(res.data))
         .finally(() => setUsersLoading(false));
     }
-    if (tab === 'complaints') {
+    if (tab === 'complaints' && isAdmin) {
       setCompLoading(true);
-      const fetch = isAdmin ? adminService.getAllComplaints() : adminService.getMyComplaints();
-      fetch.then(res => setComplaints(res.data)).finally(() => setCompLoading(false));
+      adminService.getAllComplaints()
+        .then(res => setComplaints(res.data))
+        .finally(() => setCompLoading(false));
+    }
+    if (tab === 'my') {
+      setMyLoading(true);
+      adminService.getMyComplaints()
+        .then(res => setMyComplaints(res.data))
+        .finally(() => setMyLoading(false));
     }
   }, [tab, isAdmin]);
 
+  // ── User handlers ─────────────────────────────────────────────────────────
   const handleToggleUser = async (id) => {
     await adminService.toggleUser(id);
-    setUsers(users.map(u => u.id === id ? {...u, enabled: !u.enabled} : u));
+    setUsers(users.map(u => u.id === id ? { ...u, enabled: !u.enabled } : u));
   };
 
+  const openEditUser = (u) => {
+    setEditUser(u);
+    setUserForm({ name: u.name, email: u.email, role: u.role });
+    setUserError('');
+    setShowUserModal(true);
+  };
+
+  const closeUserModal = () => { setShowUserModal(false); setEditUser(null); setUserForm(EMPTY_USER_FORM); };
+
+  const handleEditUser = async (e) => {
+    e.preventDefault();
+    setUserError('');
+    try {
+      const res = await adminService.updateUser(editUser.id, userForm);
+      setUsers(users.map(u => u.id === editUser.id ? res.data : u));
+      closeUserModal();
+    } catch { setUserError('Failed to update user'); }
+  };
+
+  // ── Admin complaint handlers ───────────────────────────────────────────────
   const handleStatusChange = async (id, status) => {
     const res = await adminService.updateStatus(id, status);
     setComplaints(complaints.map(c => c.id === id ? res.data : c));
   };
 
+  const handleDeleteComplaint = (id) => {
+    setDeleteTarget(id);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await adminService.deleteComplaint(deleteTarget);
+      setComplaints(complaints.map(c => c.id === deleteTarget ? { ...c, status: 'DELETED' } : c));
+    } catch (err) {
+      console.error('Delete failed', err);
+    } finally {
+      setDeleteTarget(null);
+    }
+  };
+
+  // ── My complaint handlers (manager / developer) ────────────────────────────
   const handleCreateComplaint = async (e) => {
     e.preventDefault();
     setError('');
     try {
       const res = await adminService.createComplaint(form);
-      setComplaints([res.data, ...complaints]);
+      setMyComplaints([res.data, ...myComplaints]);
       closeModal();
-      setForm(EMPTY_FORM);
     } catch { setError('Failed to submit'); }
   };
 
@@ -68,176 +141,388 @@ export default function AdminPanel() {
     setError('');
     try {
       const res = await adminService.editComplaint(editComplaint.id, form);
-      setComplaints(complaints.map(c => c.id === editComplaint.id ? res.data : c));
+      setMyComplaints(myComplaints.map(c => c.id === editComplaint.id ? res.data : c));
       closeModal();
-      setForm(EMPTY_FORM);
     } catch { setError('Failed to update'); }
   };
 
   return (
     <div>
-      <div className="page-header">
-        <h1 className="page-title">⚙️ {isAdmin ? 'Admin Panel' : 'My Interactions'}</h1>
-        {tab === 'complaints' && (
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+      <div className="flex justify-between items-center mb-7">
+        <div>
+          <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight">
+            ⚙️ {isAdmin ? 'Admin Panel' : 'My Interactions'}
+          </h1>
+          <p className="text-[13px] text-gray-500 mt-0.5">
+            {isAdmin ? 'Manage users and handle complaints' : 'Submit and track your complaints'}
+          </p>
+        </div>
+        {tab === 'my' && !isAdmin && (
+          <Button variant="primary" onClick={() => setShowModal(true)}>
             + Submit Complaint / Feedback
-          </button>
+          </Button>
         )}
       </div>
 
-      <div style={{display:'flex', gap:8, marginBottom:20}}>
+      {/* Tab bar */}
+      <div className="flex gap-2 mb-5 p-1 bg-gray-100 rounded-xl w-fit">
         {isAdmin && (
-          <button className={`btn ${tab === 'users' ? 'btn-primary' : 'btn-warning'}`}
-            onClick={() => setTab('users')}>
+          <button
+            onClick={() => setTab('users')}
+            className={`px-4 py-2 rounded-lg text-[13px] font-semibold transition-all duration-150 ${
+              tab === 'users' ? 'bg-white text-[#1a237e] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
             👥 User Management
           </button>
         )}
-        <button className={`btn ${tab === 'complaints' ? 'btn-primary' : 'btn-warning'}`}
-          onClick={() => setTab('complaints')}>
-          📝 Complaints & Feedback
+        {isAdmin && (
+          <button
+            onClick={() => setTab('complaints')}
+            className={`px-4 py-2 rounded-lg text-[13px] font-semibold transition-all duration-150 ${
+              tab === 'complaints' ? 'bg-white text-[#1a237e] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            📝 All Complaints &amp; Feedback
+          </button>
+        )}
+        <button
+          onClick={() => setTab('my')}
+          className={`px-4 py-2 rounded-lg text-[13px] font-semibold transition-all duration-150 ${
+            tab === 'my' ? 'bg-white text-[#1a237e] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          🙋 My Submissions
         </button>
       </div>
 
+      {/* ── User Management (admin only) ───────────────────────────────────── */}
       {tab === 'users' && isAdmin && (
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">All Users</span>
-            <span style={{color:'#888', fontSize:12}}>{users.length} users</span>
-          </div>
-          {usersLoading ? <div className="loading">Loading...</div> : (
-            <div className="table-container">
-              <table>
-                <thead>
-                  <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Action</th></tr>
-                </thead>
-                <tbody>
-                  {users.map(u => (
-                    <tr key={u.id}>
-                      <td><strong>{u.name}</strong></td>
-                      <td>{u.email}</td>
-                      <td><span className={`role-badge role-${u.role?.toLowerCase()}`}>{u.role}</span></td>
-                      <td>
-                        <span className={`badge ${u.enabled ? 'badge-active' : 'badge-on_hold'}`}>
-                          {u.enabled ? 'Active' : 'Disabled'}
-                        </span>
-                      </td>
-                      <td>
-                        {u.email !== user.email && (
-                          <button className={`btn btn-sm ${u.enabled ? 'btn-danger' : 'btn-success'}`}
-                            onClick={() => handleToggleUser(u.id)}>
-                            {u.enabled ? 'Disable' : 'Enable'}
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
-
-      {tab === 'complaints' && (
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">{isAdmin ? 'All Complaints & Feedback' : 'My Submissions'}</span>
-          </div>
-          {compLoading ? <div className="loading">Loading...</div> : (
-            <div className="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Title</th><th>Type</th><th>Description</th><th>Status</th>
-                    {isAdmin && <th>Raised By</th>}
-                    <th>Date</th>
-                    {isAdmin && <th>Update Status</th>}
-                    {isAdmin && <th>Edit</th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {complaints.length === 0 && (
-                    <tr><td colSpan={7} className="empty-msg">No submissions yet</td></tr>
-                  )}
-                  {complaints.map(c => (
-                    <tr key={c.id}>
-                      <td><strong>{c.title}</strong></td>
-                      <td><span className="badge badge-todo">{c.type}</span></td>
-                      <td style={{maxWidth:200}}>{c.description || '—'}</td>
-                      <td>
-                        <span className={`badge badge-${c.status?.toLowerCase().replace('_','-')}`}>
-                          {c.status}
-                        </span>
-                      </td>
-                      {isAdmin && <td>{c.raisedByName}</td>}
-                      <td>{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—'}</td>
-                      {isAdmin && (
-                        <td>
-                          <select value={c.status}
-                            onChange={e => handleStatusChange(c.id, e.target.value)}
-                            style={{padding:'4px 8px', borderRadius:4, border:'1px solid #ddd', fontSize:12}}>
-                            <option value="OPEN">Open</option>
-                            <option value="IN_REVIEW">In Review</option>
-                            <option value="RESOLVED">Resolved</option>
-                          </select>
-                        </td>
-                      )}
-                      {isAdmin && (
-                        <td>
-                          <button className="btn btn-warning btn-sm" onClick={() => openEdit(c)}>Edit</button>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
-
-      {showModal && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <span className="modal-title">
-                {editComplaint ? 'Edit Complaint / Feedback' : 'Submit Complaint / Feedback / Query'}
+        <Card>
+          <CardHeader>
+            <CardTitle>All Users</CardTitle>
+            <div className="flex items-center gap-2 ml-auto">
+              {['ALL', 'ADMIN', 'MANAGER', 'DEVELOPER'].map(r => (
+                <button
+                  key={r}
+                  onClick={() => setRoleFilter(r)}
+                  className={`px-3 py-1 rounded-full text-[12px] font-semibold border transition-all duration-150 ${
+                    roleFilter === r
+                      ? 'bg-[#1a237e] text-white border-[#1a237e]'
+                      : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                  }`}
+                >
+                  {r === 'ALL' ? 'All' : r.charAt(0) + r.slice(1).toLowerCase()}
+                </button>
+              ))}
+              <span className="text-xs text-gray-400 font-medium bg-gray-100 px-2 py-0.5 rounded-full ml-1">
+                {(roleFilter === 'ALL' ? users : users.filter(u => u.role === roleFilter)).length} users
               </span>
-              <button className="modal-close" onClick={closeModal}>×</button>
             </div>
-            {error && <div className="alert alert-error">{error}</div>}
-            <form onSubmit={editComplaint ? handleEditComplaint : handleCreateComplaint}>
-              <div className="form-group">
-                <label>Title *</label>
-                <input value={form.title}
-                  onChange={e => setForm({...form, title: e.target.value})} required />
-              </div>
-              <div className="form-group">
-                <label>Type</label>
-                <select value={form.type} onChange={e => setForm({...form, type: e.target.value})}>
-                  <option value="COMPLAINT">Complaint</option>
-                  <option value="FEEDBACK">Feedback</option>
-                  <option value="QUERY">Query</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Description</label>
-                <textarea value={form.description} rows={4}
-                  onChange={e => setForm({...form, description: e.target.value})} />
-              </div>
-              <div className="flex-gap">
-                <button type="submit" className="btn btn-primary">
-                  {editComplaint ? 'Update' : 'Submit'}
-                </button>
-                <button type="button" className="btn btn-warning"
-                  onClick={closeModal}>
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+          </CardHeader>
+          {usersLoading ? (
+            <div className="text-center py-10 text-gray-400 animate-pulse">Loading…</div>
+          ) : (
+            <Table>
+              <TableHead>
+                <tr>
+                  <TableHeader>Name</TableHeader>
+                  <TableHeader>Email</TableHeader>
+                  <TableHeader>Role</TableHeader>
+                  <TableHeader>Status</TableHeader>
+                  <TableHeader>Action</TableHeader>
+                </tr>
+              </TableHead>
+              <TableBody>
+                {(roleFilter === 'ALL' ? users : users.filter(u => u.role === roleFilter)).map(u => (
+                  <TableRow key={u.id}>
+                    <TableCell><span className="font-semibold text-gray-900">{u.name}</span></TableCell>
+                    <TableCell className="text-gray-600">{u.email}</TableCell>
+                    <TableCell><RoleBadge role={u.role} /></TableCell>
+                    <TableCell>
+                      <Badge value={u.enabled ? 'active' : 'on_hold'}>
+                        {u.enabled ? 'Active' : 'Disabled'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        {u.email !== user.email && (
+                          <Button
+                            variant={u.enabled ? 'danger' : 'success'}
+                            size="sm"
+                            onClick={() => handleToggleUser(u.id)}
+                          >
+                            {u.enabled ? 'Disable' : 'Enable'}
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="sm" onClick={() => openEditUser(u)}>Edit</Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </Card>
       )}
+
+      {/* ── All Complaints (admin only) ────────────────────────────────────── */}
+      {tab === 'complaints' && isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle>All Complaints &amp; Feedback</CardTitle>
+            <div className="flex items-center gap-2 ml-auto">
+              <Select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="w-auto text-xs py-1">
+                <option value="ALL">All Types</option>
+                <option value="COMPLAINT">Complaint</option>
+                <option value="FEEDBACK">Feedback</option>
+                <option value="QUERY">Query</option>
+              </Select>
+              <Select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="w-auto text-xs py-1">
+                <option value="ALL">All Status</option>
+                <option value="OPEN">Open</option>
+                <option value="IN_REVIEW">In Review</option>
+                <option value="RESOLVED">Resolved</option>
+                <option value="DELETED">Deleted</option>
+              </Select>
+              <span className="text-xs text-gray-400 font-medium bg-gray-100 px-2 py-0.5 rounded-full">
+                {complaints.filter(c =>
+                  (statusFilter === 'ALL' ? c.status !== 'DELETED' : c.status === statusFilter) &&
+                  (typeFilter === 'ALL' || c.type === typeFilter)
+                ).length} items
+              </span>
+            </div>
+          </CardHeader>
+          {compLoading ? (
+            <div className="text-center py-10 text-gray-400 animate-pulse">Loading…</div>
+          ) : (
+            <Table>
+              <TableHead>
+                <tr>
+                  <TableHeader>Title</TableHeader>
+                  <TableHeader>Type</TableHeader>
+                  <TableHeader>Description</TableHeader>
+                  <TableHeader>Status</TableHeader>
+                  <TableHeader>Raised By</TableHeader>
+                  <TableHeader>Date</TableHeader>
+                  <TableHeader>Update Status</TableHeader>
+                  <TableHeader>Actions</TableHeader>
+                </tr>
+              </TableHead>
+              <TableBody>
+                {complaints.filter(c =>
+                  (statusFilter === 'ALL' ? c.status !== 'DELETED' : c.status === statusFilter) &&
+                  (typeFilter === 'ALL' || c.type === typeFilter)
+                ).length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-12 text-gray-400">No submissions yet</TableCell>
+                  </TableRow>
+                )}
+                {complaints.filter(c =>
+                  (statusFilter === 'ALL' ? c.status !== 'DELETED' : c.status === statusFilter) &&
+                  (typeFilter === 'ALL' || c.type === typeFilter)
+                ).map(c => (
+                  <TableRow key={c.id} className={c.status === 'DELETED' ? 'opacity-50' : ''}>
+                    <TableCell><span className="font-semibold text-gray-900">{c.title}</span></TableCell>
+                    <TableCell><Badge value="todo">{c.type}</Badge></TableCell>
+                    <TableCell className="max-w-[180px] truncate text-gray-500">{c.description || '—'}</TableCell>
+                    <TableCell>
+                      <Badge value={c.status?.toLowerCase().replace('_', '-')}>{c.status}</Badge>
+                    </TableCell>
+                    <TableCell className="text-gray-600">{c.raisedByName}</TableCell>
+                    <TableCell className="text-gray-500">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—'}</TableCell>
+                    <TableCell>
+                      {c.status !== 'DELETED' && (
+                        <Select
+                          value={c.status}
+                          onChange={e => handleStatusChange(c.id, e.target.value)}
+                          className="w-auto text-xs py-1"
+                        >
+                          <option value="OPEN">Open</option>
+                          <option value="IN_REVIEW">In Review</option>
+                          <option value="RESOLVED">Resolved</option>
+                        </Select>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {c.status !== 'DELETED' && (
+                        <Button variant="danger" size="sm" onClick={() => handleDeleteComplaint(c.id)}>
+                          Delete
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </Card>
+      )}
+
+      {/* ── My Submissions (all roles) ─────────────────────────────────────── */}
+      {tab === 'my' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>My Submissions</CardTitle>
+            <div className="flex items-center gap-2 ml-auto">
+              <Select value={myTypeFilter} onChange={e => setMyTypeFilter(e.target.value)} className="w-auto text-xs py-1">
+                <option value="ALL">All Types</option>
+                <option value="COMPLAINT">Complaint</option>
+                <option value="FEEDBACK">Feedback</option>
+                <option value="QUERY">Query</option>
+              </Select>
+              <Select value={myStatusFilter} onChange={e => setMyStatusFilter(e.target.value)} className="w-auto text-xs py-1">
+                <option value="ALL">All Status</option>
+                <option value="OPEN">Open</option>
+                <option value="IN_REVIEW">In Review</option>
+                <option value="RESOLVED">Resolved</option>
+              </Select>
+              <span className="text-xs text-gray-400 font-medium bg-gray-100 px-2 py-0.5 rounded-full">
+                {myComplaints.filter(c =>
+                  (myStatusFilter === 'ALL' || c.status === myStatusFilter) &&
+                  (myTypeFilter === 'ALL' || c.type === myTypeFilter)
+                ).length} items
+              </span>
+            </div>
+          </CardHeader>
+          {myLoading ? (
+            <div className="text-center py-10 text-gray-400 animate-pulse">Loading…</div>
+          ) : (
+            <Table>
+              <TableHead>
+                <tr>
+                  <TableHeader>Title</TableHeader>
+                  <TableHeader>Type</TableHeader>
+                  <TableHeader>Description</TableHeader>
+                  <TableHeader>Status</TableHeader>
+                  <TableHeader>Date</TableHeader>
+                  {!isAdmin && <TableHeader>Actions</TableHeader>}
+                </tr>
+              </TableHead>
+              <TableBody>
+                {myComplaints.filter(c =>
+                  (myStatusFilter === 'ALL' || c.status === myStatusFilter) &&
+                  (myTypeFilter === 'ALL' || c.type === myTypeFilter)
+                ).length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={!isAdmin ? 6 : 5} className="text-center py-12 text-gray-400">No submissions yet</TableCell>
+                  </TableRow>
+                )}
+                {myComplaints.filter(c =>
+                  (myStatusFilter === 'ALL' || c.status === myStatusFilter) &&
+                  (myTypeFilter === 'ALL' || c.type === myTypeFilter)
+                ).map(c => (
+                  <TableRow key={c.id}>
+                    <TableCell><span className="font-semibold text-gray-900">{c.title}</span></TableCell>
+                    <TableCell><Badge value="todo">{c.type}</Badge></TableCell>
+                    <TableCell className="max-w-[180px] truncate text-gray-500">{c.description || '—'}</TableCell>
+                    <TableCell>
+                      <Badge value={c.status?.toLowerCase().replace('_', '-')}>{c.status}</Badge>
+                    </TableCell>
+                    <TableCell className="text-gray-500">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—'}</TableCell>
+                    {!isAdmin && (
+                      <TableCell>
+                        <Button variant="ghost" size="sm" onClick={() => openEdit(c)}>Edit</Button>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </Card>
+      )}
+
+      {/* ── Edit User Modal ───────────────────────────────────────────────── */}
+      <Modal show={showUserModal} onClose={closeUserModal} title="Edit User">
+        {userError && <Alert variant="error">{userError}</Alert>}
+        <form onSubmit={handleEditUser} className="space-y-4">
+          <FormGroup>
+            <Label>Name *</Label>
+            <Input
+              value={userForm.name}
+              onChange={e => setUserForm({ ...userForm, name: e.target.value })}
+              placeholder="Full name"
+              required
+            />
+          </FormGroup>
+          <FormGroup>
+            <Label>Email *</Label>
+            <Input
+              type="email"
+              value={userForm.email}
+              onChange={e => setUserForm({ ...userForm, email: e.target.value })}
+              placeholder="Email address"
+              required
+            />
+          </FormGroup>
+          <FormGroup>
+            <Label>Role</Label>
+            <Select value={userForm.role} onChange={e => setUserForm({ ...userForm, role: e.target.value })}>
+              <option value="ADMIN">Admin</option>
+              <option value="MANAGER">Manager</option>
+              <option value="DEVELOPER">Developer</option>
+            </Select>
+          </FormGroup>
+          <div className="flex gap-3 pt-2 border-t border-gray-100">
+            <Button type="submit" variant="primary">Save Changes</Button>
+            <Button type="button" variant="secondary" onClick={closeUserModal}>Cancel</Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* ── Create / Edit Complaint Modal (non-admin only) ────────────────── */}
+      <Modal
+        show={showModal}
+        onClose={closeModal}
+        title={editComplaint ? 'Edit Complaint / Feedback' : 'Submit Complaint / Feedback / Query'}
+      >
+        {error && <Alert variant="error">{error}</Alert>}
+        <form onSubmit={editComplaint ? handleEditComplaint : handleCreateComplaint} className="space-y-4">
+          <FormGroup>
+            <Label>Title *</Label>
+            <Input
+              value={form.title}
+              onChange={e => setForm({ ...form, title: e.target.value })}
+              placeholder="Brief title"
+              required
+            />
+          </FormGroup>
+          <FormGroup>
+            <Label>Type</Label>
+            <Select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
+              <option value="COMPLAINT">Complaint</option>
+              <option value="FEEDBACK">Feedback</option>
+              <option value="QUERY">Query</option>
+            </Select>
+          </FormGroup>
+          <FormGroup>
+            <Label>Description</Label>
+            <Textarea
+              value={form.description}
+              rows={4}
+              onChange={e => setForm({ ...form, description: e.target.value })}
+              placeholder="Describe your complaint, feedback, or query…"
+            />
+          </FormGroup>
+          <div className="flex gap-3 pt-2 border-t border-gray-100">
+            <Button type="submit" variant="primary">
+              {editComplaint ? 'Update' : 'Submit'}
+            </Button>
+            <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
+          </div>
+        </form>
+      </Modal>
+      {/* ── Delete Confirmation Modal ─────────────────────────────────────── */}
+      <Modal show={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Delete Complaint">
+        <p className="text-[14px] text-gray-600 mb-6">
+          Are you sure you want to delete this complaint? It will be moved to the <span className="font-semibold text-gray-800">Deleted</span> filter and can still be reviewed.
+        </p>
+        <div className="flex gap-3 pt-2 border-t border-gray-100">
+          <Button variant="danger" onClick={confirmDelete}>Yes, Delete</Button>
+          <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+        </div>
+      </Modal>
     </div>
   );
 }

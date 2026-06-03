@@ -2,6 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { milestoneService } from '../../services/taskService';
 import { useAuth } from '../../context/AuthContext';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Badge } from '../ui/badge';
+import { Alert } from '../ui/alert';
+import { Card } from '../ui/card';
+import { FormGroup } from '../ui/form-group';
+import { Modal } from '../ui/modal';
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui/table';
 
 export default function MilestoneTracker() {
   const { id: projectId } = useParams();
@@ -13,7 +22,14 @@ export default function MilestoneTracker() {
   const [form, setForm] = useState({ title:'', dueDate:'', completed: false, projectId });
   const [error, setError] = useState('');
 
+  const [filter, setFilter] = useState('ALL');
   const canManage = user?.role === 'ADMIN' || user?.role === 'MANAGER';
+
+  const filteredMilestones = milestones.filter(m => {
+    if (filter === 'PENDING') return !m.completed;
+    if (filter === 'COMPLETED') return m.completed;
+    return true;
+  });
 
   useEffect(() => {
     milestoneService.getByProject(projectId)
@@ -60,88 +76,122 @@ export default function MilestoneTracker() {
     setMilestones(milestones.map(x => x.id === m.id ? res.data : x));
   };
 
-  if (loading) return <div className="loading">Loading milestones...</div>;
+  if (loading) return (
+    <div className="flex items-center justify-center py-20">
+      <div className="text-gray-400 animate-pulse">Loading milestones…</div>
+    </div>
+  );
 
   return (
     <div>
-      <div className="page-header">
-        <h1 className="page-title">🏁 Milestones</h1>
-        {canManage && <button className="btn btn-primary" onClick={openCreate}>+ Add Milestone</button>}
-      </div>
-
-      <div className="card">
-        <div className="table-container">
-          <table>
-            <thead>
-              <tr><th>Title</th><th>Due Date</th><th>Status</th><th>Actions</th></tr>
-            </thead>
-            <tbody>
-              {milestones.length === 0 && (
-                <tr><td colSpan={4} className="empty-msg">No milestones yet</td></tr>
-              )}
-              {milestones.map(m => (
-                <tr key={m.id}>
-                  <td style={{textDecoration: m.completed ? 'line-through' : 'none'}}>
-                    <strong>{m.title}</strong>
-                  </td>
-                  <td>{m.dueDate || '—'}</td>
-                  <td>
-                    <span className={`badge ${m.completed ? 'badge-done' : 'badge-todo'}`}>
-                      {m.completed ? 'Completed' : 'Pending'}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="flex-gap">
-                      <button className={`btn btn-sm ${m.completed ? 'btn-warning' : 'btn-success'}`}
-                        onClick={() => toggleComplete(m)}>
-                        {m.completed ? 'Reopen' : 'Mark Done'}
-                      </button>
-                      {canManage && (
-                        <>
-                          <button className="btn btn-warning btn-sm" onClick={() => openEdit(m)}>Edit</button>
-                          <button className="btn btn-danger btn-sm" onClick={() => handleDelete(m.id)}>Delete</button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="flex justify-between items-center mb-5">
+        <div>
+          <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight">🏁 Milestones</h1>
+          <p className="text-[13px] text-gray-500 mt-0.5">{filteredMilestones.length} of {milestones.length} milestone{milestones.length !== 1 ? 's' : ''}</p>
         </div>
+        {canManage && <Button variant="primary" onClick={openCreate}>+ Add Milestone</Button>}
+      </div>
+      <div className="flex gap-1 mb-5 bg-gray-100 rounded-lg p-1 w-fit">
+        {[['ALL', 'All'], ['PENDING', 'Pending'], ['COMPLETED', 'Completed']].map(([val, label]) => (
+          <button
+            key={val}
+            onClick={() => setFilter(val)}
+            className={`px-4 py-1.5 rounded-md text-[13px] font-medium transition-colors ${
+              filter === val
+                ? 'bg-white text-[#1a237e] shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {label}
+            <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${
+              filter === val ? 'bg-[#e8eaf6] text-[#3f51b5]' : 'bg-gray-200 text-gray-500'
+            }`}>
+              {val === 'ALL' ? milestones.length : val === 'PENDING' ? milestones.filter(m => !m.completed).length : milestones.filter(m => m.completed).length}
+            </span>
+          </button>
+        ))}
       </div>
 
-      {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <span className="modal-title">{editItem ? 'Edit Milestone' : 'New Milestone'}</span>
-              <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
-            </div>
-            {error && <div className="alert alert-error">{error}</div>}
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label>Title *</label>
-                <input name="title" value={form.title}
-                  onChange={e => setForm({...form, title: e.target.value})} required />
-              </div>
-              <div className="form-group">
-                <label>Due Date</label>
-                <input type="date" name="dueDate" value={form.dueDate}
-                  onChange={e => setForm({...form, dueDate: e.target.value})} />
-              </div>
-              <div className="flex-gap">
-                <button type="submit" className="btn btn-primary">
-                  {editItem ? 'Update' : 'Create'}
-                </button>
-                <button type="button" className="btn btn-warning" onClick={() => setShowModal(false)}>
-                  Cancel
-                </button>
-              </div>
-            </form>
+      <Card>
+        <Table>
+          <TableHead>
+            <tr>
+              <TableHeader>Title</TableHeader>
+              <TableHeader>Due Date</TableHeader>
+              <TableHeader>Status</TableHeader>
+              <TableHeader>Actions</TableHeader>
+            </tr>
+          </TableHead>
+          <TableBody>
+            {filteredMilestones.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center py-12 text-gray-400">
+                  {milestones.length === 0 ? 'No milestones yet' : `No ${filter === 'COMPLETED' ? 'completed' : 'pending'} milestones`}
+                </TableCell>
+              </TableRow>
+            )}
+            {filteredMilestones.map(m => (
+              <TableRow key={m.id}>
+                <TableCell>
+                  <span className={`font-semibold ${m.completed ? 'line-through text-gray-400' : 'text-gray-900'}`}>{m.title}</span>
+                </TableCell>
+                <TableCell className="text-gray-500">{m.dueDate || '—'}</TableCell>
+                <TableCell>
+                  <Badge value={m.completed ? 'done' : 'todo'}>
+                    {m.completed ? 'Completed' : 'Pending'}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-1.5 items-center">
+                    {canManage && (
+                      <Button variant="ghost" size="sm" onClick={() => openEdit(m)}>Edit</Button>
+                    )}
+                    <Button
+                      variant={m.completed ? 'warning' : 'success'}
+                      size="sm"
+                      onClick={() => toggleComplete(m)}
+                    >
+                      {m.completed ? 'Reopen' : 'Mark Done'}
+                    </Button>
+                    {canManage && (
+                      <Button variant="danger" size="sm" onClick={() => handleDelete(m.id)}>Delete</Button>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+
+      <Modal show={showModal} onClose={() => setShowModal(false)} title={editItem ? 'Edit Milestone' : 'New Milestone'}>
+        {error && <Alert variant="error">{error}</Alert>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <FormGroup>
+            <Label>Title *</Label>
+            <Input
+              name="title"
+              value={form.title}
+              onChange={e => setForm({...form, title: e.target.value})}
+              placeholder="Milestone title"
+              required
+            />
+          </FormGroup>
+          <FormGroup>
+            <Label>Due Date</Label>
+            <Input
+              type="date"
+              name="dueDate"
+              value={form.dueDate}
+              onChange={e => setForm({...form, dueDate: e.target.value})}
+            />
+          </FormGroup>
+          <div className="flex gap-3 pt-2 border-t border-gray-100">
+            <Button type="submit" variant="primary">{editItem ? 'Update Milestone' : 'Create Milestone'}</Button>
+            <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
           </div>
-        </div>
-      )}
+        </form>
+      </Modal>
     </div>
   );
 }
