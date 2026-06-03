@@ -136,7 +136,7 @@ export default function Dashboard() {
             )}
             {data.recentProjects?.map(p => (
               <TableRow key={p.id}>
-                <TableCell><span className="font-semibold text-gray-900">{p.name}</span></TableCell>
+                <TableCell><span className="font-semibold text-blue-700 hover:underline cursor-pointer" onClick={() => navigate(`/projects/${p.id}`)}>{p.name}</span></TableCell>
                 <TableCell><Badge value={p.status}>{p.status}</Badge></TableCell>
                 <TableCell className="text-gray-600">{p.ownerName}</TableCell>
                 <TableCell className="text-gray-500">{p.startDate || '—'}</TableCell>
@@ -176,7 +176,7 @@ export default function Dashboard() {
             )}
             {data.myTasks?.map(t => (
               <TableRow key={t.id}>
-                <TableCell className="font-medium text-gray-800">{t.title}</TableCell>
+                <TableCell className="font-medium text-blue-700 hover:underline cursor-pointer" onClick={() => navigate(`/projects/${t.projectId}/tasks`)}>{t.title}</TableCell>
                 <TableCell><Badge value={t.status}>{t.status}</Badge></TableCell>
                 <TableCell><Badge value={t.priority}>{t.priority}</Badge></TableCell>
                 <TableCell className="text-gray-500">{t.endDate || '—'}</TableCell>
@@ -223,7 +223,7 @@ export default function Dashboard() {
               )}
               {data.upcomingMilestones?.map(m => (
                 <TableRow key={m.id}>
-                  <TableCell className="font-medium text-gray-800">{m.title}</TableCell>
+                  <TableCell className="font-medium text-blue-700 hover:underline cursor-pointer" onClick={() => navigate(`/projects/${m.projectId}/milestones`)}>{m.title}</TableCell>
                   <TableCell className="text-gray-500">{m.dueDate || '—'}</TableCell>
                   <TableCell>
                     <Badge value={m.completed ? 'done' : 'todo'}>
@@ -268,7 +268,7 @@ export default function Dashboard() {
               )}
               {data.upcomingMeetings?.map(m => (
                 <TableRow key={m.id}>
-                  <TableCell className="font-medium text-gray-800">{m.title}</TableCell>
+                  <TableCell className="font-medium text-blue-700 hover:underline cursor-pointer" onClick={() => navigate(`/projects/${m.projectId}/meetings`)}>{m.title}</TableCell>
                   <TableCell className="text-gray-500">{m.meetingDate ? new Date(m.meetingDate).toLocaleString() : '—'}</TableCell>
                   <TableCell className="text-gray-500">{m.location || '—'}</TableCell>
                 </TableRow>
@@ -300,7 +300,7 @@ export default function Dashboard() {
             )}
             {data.upcomingHolidays?.map(h => (
               <TableRow key={h.id}>
-                <TableCell className="font-medium text-gray-800">{h.name}</TableCell>
+                <TableCell className="font-medium text-blue-700 hover:underline cursor-pointer" onClick={() => navigate('/calendar')}>{h.name}</TableCell>
                 <TableCell className="text-gray-500">{h.holidayDate}</TableCell>
                 <TableCell className="text-gray-500">{new Date(h.holidayDate + 'T00:00:00').toLocaleDateString('default', { weekday: 'long' })}</TableCell>
               </TableRow>
