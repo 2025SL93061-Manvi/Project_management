@@ -11,10 +11,11 @@ export default function ReportViewer() {
   const [error, setError]       = useState('');
   const [success, setSuccess]   = useState('');
 
+  const clearMessages = () => { setError(''); setSuccess(''); };
+
   const handleDownload = async () => {
     setLoading(true);
-    setError('');
-    setSuccess('');
+    clearMessages();
     try {
       const res = await reportService.download(projectId);
       const url = window.URL.createObjectURL(new Blob([res.data]));
@@ -33,8 +34,7 @@ export default function ReportViewer() {
 
   const handleEmail = async () => {
     setEmailing(true);
-    setError('');
-    setSuccess('');
+    clearMessages();
     try {
       await reportService.email(projectId);
       setSuccess('Report summary emailed to your account!');
@@ -46,8 +46,7 @@ export default function ReportViewer() {
   };
 
   const handlePrint = async () => {
-    setError('');
-    setSuccess('');
+    clearMessages();
     try {
       const [projRes, tasksRes, milestonesRes] = await Promise.all([
         projectService.getById(projectId),
@@ -58,9 +57,13 @@ export default function ReportViewer() {
       const tasks      = tasksRes.data;
       const milestones = milestonesRes.data;
 
-      const done       = tasks.filter(t => t.status === 'DONE').length;
-      const inProgress = tasks.filter(t => t.status === 'IN_PROGRESS').length;
-      const todo       = tasks.filter(t => t.status === 'TODO').length;
+      const counts = tasks.reduce((acc, t) => {
+        if (t.status === 'DONE') acc.done++;
+        else if (t.status === 'IN_PROGRESS') acc.inProgress++;
+        else if (t.status === 'TODO') acc.todo++;
+        return acc;
+      }, { done: 0, inProgress: 0, todo: 0 });
+      const { done, inProgress, todo } = counts;
 
       const taskRows = tasks.map(t => `
         <tr>

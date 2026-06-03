@@ -62,7 +62,7 @@ export default function TaskList() {
     e.preventDefault();
     setError('');
     const payload = { ...form,
-      assigneeIds: form.assigneeIds.map(Number),
+      assigneeIds: form.assigneeIds,
       startDate: form.startDate || null,
       endDate:   form.endDate   || null,
       projectId: Number(projectId)
@@ -121,7 +121,7 @@ export default function TaskList() {
                   <td><span className={`badge badge-${t.status?.toLowerCase()}`}>{t.status}</span></td>
                   <td><span className={`badge badge-${t.priority?.toLowerCase()}`}>{t.priority}</span></td>
                   <td>
-                    {t.assigneeNames && t.assigneeNames.length > 0
+                    {t.assigneeNames?.length > 0
                       ? t.assigneeNames.join(', ')
                       : (t.assignedToName || 'Unassigned')}
                   </td>

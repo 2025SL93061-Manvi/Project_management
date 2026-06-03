@@ -117,10 +117,10 @@ public class TaskService {
         // Fall back to single assignedToId if multi-list not provided
         if (dto.getAssignedToId() != null) {
             return userRepository.findById(dto.getAssignedToId())
-                    .map(u -> { List<User> l = new ArrayList<>(); l.add(u); return l; })
-                    .orElse(new ArrayList<>());
+                    .map(List::of)
+                    .orElse(List.of());
         }
-        return new ArrayList<>();
+        return List.of();
     }
 
     public TaskDTO toDTO(Task task) {
@@ -138,10 +138,12 @@ public class TaskService {
             dto.setAssignedToId(task.getAssignedTo().getId());
             dto.setAssignedToName(task.getAssignedTo().getName());
         }
-        // Multi-assignees
         if (task.getAssignees() != null && !task.getAssignees().isEmpty()) {
-            dto.setAssigneeIds(task.getAssignees().stream().map(User::getId).collect(Collectors.toList()));
-            dto.setAssigneeNames(task.getAssignees().stream().map(User::getName).collect(Collectors.toList()));
+            List<Long> ids = new ArrayList<>();
+            List<String> names = new ArrayList<>();
+            for (User u : task.getAssignees()) { ids.add(u.getId()); names.add(u.getName()); }
+            dto.setAssigneeIds(ids);
+            dto.setAssigneeNames(names);
         }
         return dto;
     }

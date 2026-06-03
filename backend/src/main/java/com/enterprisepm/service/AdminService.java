@@ -44,8 +44,7 @@ public class AdminService {
     }
 
     public ComplaintDTO updateStatus(Long id, String status) {
-        Complaint complaint = complaintRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Complaint not found"));
+        Complaint complaint = findComplaintOrThrow(id);
         complaint.setStatus(ComplaintStatus.valueOf(status.toUpperCase()));
         Complaint saved = complaintRepository.save(complaint);
         if (saved.getRaisedBy() != null) {
@@ -59,8 +58,7 @@ public class AdminService {
     }
 
     public ComplaintDTO edit(Long id, ComplaintDTO dto) {
-        Complaint complaint = complaintRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Complaint not found"));
+        Complaint complaint = findComplaintOrThrow(id);
         if (dto.getTitle() != null && !dto.getTitle().isBlank()) {
             complaint.setTitle(dto.getTitle());
         }
@@ -82,6 +80,11 @@ public class AdminService {
         userRepository.save(user);
         // Notify the user about their account status change
         emailService.sendAccountStatusEmail(user.getEmail(), user.getName(), user.isEnabled());
+    }
+
+    private Complaint findComplaintOrThrow(Long id) {
+        return complaintRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Complaint not found"));
     }
 
     private ComplaintDTO toDTO(Complaint c) {

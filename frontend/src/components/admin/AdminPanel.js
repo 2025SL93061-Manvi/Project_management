@@ -15,8 +15,12 @@ export default function AdminPanel() {
   const [compLoading, setCompLoading] = useState(false);
   const [showModal, setShowModal]     = useState(false);
   const [editComplaint, setEditComplaint] = useState(null);
-  const [form, setForm] = useState({ title:'', description:'', type:'COMPLAINT' });
+
+  const EMPTY_FORM = { title:'', description:'', type:'COMPLAINT' };
+  const [form, setForm] = useState(EMPTY_FORM);
   const [error, setError] = useState('');
+
+  const closeModal = () => { setShowModal(false); setEditComplaint(null); };
 
   useEffect(() => {
     if (tab === 'users' && isAdmin) {
@@ -48,8 +52,8 @@ export default function AdminPanel() {
     try {
       const res = await adminService.createComplaint(form);
       setComplaints([res.data, ...complaints]);
-      setShowModal(false);
-      setForm({ title:'', description:'', type:'COMPLAINT' });
+      closeModal();
+      setForm(EMPTY_FORM);
     } catch { setError('Failed to submit'); }
   };
 
@@ -65,9 +69,8 @@ export default function AdminPanel() {
     try {
       const res = await adminService.editComplaint(editComplaint.id, form);
       setComplaints(complaints.map(c => c.id === editComplaint.id ? res.data : c));
-      setShowModal(false);
-      setEditComplaint(null);
-      setForm({ title:'', description:'', type:'COMPLAINT' });
+      closeModal();
+      setForm(EMPTY_FORM);
     } catch { setError('Failed to update'); }
   };
 
@@ -194,13 +197,13 @@ export default function AdminPanel() {
       )}
 
       {showModal && (
-        <div className="modal-overlay" onClick={() => { setShowModal(false); setEditComplaint(null); }}>
+        <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <span className="modal-title">
                 {editComplaint ? 'Edit Complaint / Feedback' : 'Submit Complaint / Feedback / Query'}
               </span>
-              <button className="modal-close" onClick={() => { setShowModal(false); setEditComplaint(null); }}>×</button>
+              <button className="modal-close" onClick={closeModal}>×</button>
             </div>
             {error && <div className="alert alert-error">{error}</div>}
             <form onSubmit={editComplaint ? handleEditComplaint : handleCreateComplaint}>
@@ -227,7 +230,7 @@ export default function AdminPanel() {
                   {editComplaint ? 'Update' : 'Submit'}
                 </button>
                 <button type="button" className="btn btn-warning"
-                  onClick={() => { setShowModal(false); setEditComplaint(null); }}>
+                  onClick={closeModal}>
                   Cancel
                 </button>
               </div>
