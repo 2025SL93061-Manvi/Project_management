@@ -2,6 +2,7 @@ package com.enterprisepm.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,6 +24,7 @@ public class Holiday {
     @Column(nullable = false)
     private String name;
 
+    @NotNull
     @Column(nullable = false)
     private LocalDate holidayDate;
 }

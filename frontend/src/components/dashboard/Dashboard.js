@@ -45,10 +45,18 @@ export default function Dashboard() {
   if (loading) return <div className="loading">Loading dashboard...</div>;
   if (error)   return <div className="alert alert-error">{error}</div>;
 
+function toTitleCase(str) {
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">Welcome, {user?.name} 👋</h1>
+        <h1 className="page-title">Welcome, {toTitleCase(user?.name)} 👋</h1>
       </div>
 
       <div className="stats-row">
@@ -76,7 +84,7 @@ export default function Dashboard() {
 
       <div className="card">
         <div className="card-header">
-          <span className="card-title">📁 My Projects</span>
+          <span className="card-title">📁 Recent Projects</span>
           {data.recentProjects?.length === 0 ? (
             <button className="btn btn-primary btn-sm" onClick={() => navigate('/projects/new')}>+ New Project</button>
           ) : (

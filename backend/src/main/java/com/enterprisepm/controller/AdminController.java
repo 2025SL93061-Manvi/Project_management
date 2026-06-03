@@ -5,6 +5,7 @@ import com.enterprisepm.model.User;
 import com.enterprisepm.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -48,7 +49,7 @@ public class AdminController {
 
     @PostMapping("/complaints")
     public ResponseEntity<ComplaintDTO> create(
-            @RequestBody ComplaintDTO dto,
+            @Valid @RequestBody ComplaintDTO dto,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(adminService.create(dto, userDetails.getUsername()));
     }

@@ -55,12 +55,6 @@ export default function Login() {
           Don't have an account? <Link to="/register">Register</Link>
         </p>
 
-        <div className="auth-hints">
-          <p><strong>Test accounts (password: password123)</strong></p>
-          <p>Admin: admin@epm.com</p>
-          <p>Manager: alice@epm.com</p>
-          <p>Developer: bob@epm.com</p>
-        </div>
       </div>
     </div>
   );

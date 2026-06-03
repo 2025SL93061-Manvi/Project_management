@@ -4,6 +4,7 @@ import com.enterprisepm.model.Holiday;
 import com.enterprisepm.service.CalendarService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class CalendarController {
         return ResponseEntity.ok(calendarService.addHoliday(holiday));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/holidays/{id}")
     public ResponseEntity<String> deleteHoliday(@PathVariable Long id) {
         calendarService.deleteHoliday(id);
