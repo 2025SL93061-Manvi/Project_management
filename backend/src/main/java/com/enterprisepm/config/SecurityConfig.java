@@ -51,7 +51,7 @@ public class SecurityConfig {
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(userDetailsService);
+        provider.setUserDetailsService(userDetailsService); // where to fetch user details
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }
@@ -61,4 +61,5 @@ public class SecurityConfig {
             AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
+    // bean which can be injected and used anywhere 
 }

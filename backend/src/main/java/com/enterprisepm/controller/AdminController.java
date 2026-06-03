@@ -5,7 +5,6 @@ import com.enterprisepm.model.User;
 import com.enterprisepm.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -20,20 +19,17 @@ public class AdminController {
     private final AdminService adminService;
 
     @GetMapping("/users")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(adminService.getAllUsers());
     }
 
     @PutMapping("/users/{userId}/toggle")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> toggleUser(@PathVariable Long userId) {
         adminService.toggleUserStatus(userId);
         return ResponseEntity.ok("User status updated");
     }
 
     @GetMapping("/complaints")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ComplaintDTO>> getAllComplaints() {
         return ResponseEntity.ok(adminService.getAllComplaints());
     }
@@ -58,7 +54,6 @@ public class AdminController {
     }
 
     @PutMapping("/complaints/{id}/status")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ComplaintDTO> updateStatus(
             @PathVariable Long id,
             @RequestParam String status) {
@@ -66,7 +61,6 @@ public class AdminController {
     }
 
     @PutMapping("/complaints/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ComplaintDTO> editComplaint(
             @PathVariable Long id,
             @RequestBody ComplaintDTO dto) {
