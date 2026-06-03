@@ -47,7 +47,8 @@ export default function Login() {
         <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
           <LayoutDashboard size={32} strokeWidth={1.8} className="text-white" />
         </div>
-        <h1 className="text-3xl font-bold mb-3 tracking-tight">Enterprise PM</h1>
+        <h1 className="text-3xl font-bold mb-3 tracking-tight">Meridian</h1>
+        <p className="text-white/60 text-center text-sm tracking-wide mb-1">The central reference point for all project work</p>
         <p className="text-white/70 text-center text-base leading-relaxed max-w-xs">
           Manage projects, track tasks, schedule meetings, and collaborate — all in one place.
         </p>
@@ -67,7 +68,7 @@ export default function Login() {
             <div className="w-12 h-12 bg-[#3f51b5] rounded-xl flex items-center justify-center mx-auto mb-3 shadow">
               <LayoutDashboard size={22} strokeWidth={2} className="text-white" />
             </div>
-            <h1 className="text-xl font-bold text-[#1a237e]">Enterprise PM</h1>
+            <h1 className="text-xl font-bold text-[#1a237e]">Meridian</h1>
           </div>
 
           <div className="bg-white rounded-2xl p-8 shadow-[0_4px_24px_rgba(63,81,181,0.1)] border border-gray-100">

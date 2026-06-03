@@ -70,11 +70,17 @@ export default function Navbar() {
       <nav className="bg-gradient-to-r from-[#3f51b5] to-[#5c6bc0] text-white px-6 h-14 flex items-center justify-between shadow-[0_2px_8px_rgba(63,81,181,0.35)] sticky top-0 z-[100]">
 
         {/* Brand */}
-        <div className="flex items-center gap-2.5">
+        <div
+          className="flex items-center gap-2.5 cursor-pointer"
+          onClick={() => navigate('/')}
+        >
           <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center shadow-sm">
             <LayoutDashboard size={16} strokeWidth={2} className="text-white" />
           </div>
-          <span className="text-[16px] font-bold tracking-tight">Enterprise PM</span>
+          <div className="flex flex-col leading-none">
+            <span className="text-[16px] font-bold tracking-tight">Meridian</span>
+            <span className="text-[10px] text-white/60 tracking-wide">The central reference point for all project work</span>
+          </div>
         </div>
 
         {/* Nav links */}

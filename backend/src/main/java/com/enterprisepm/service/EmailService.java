@@ -108,6 +108,56 @@ public class EmailService {
     }
 
     @Async
+    public void sendMeetingReminderEmail(String toEmail, String userName,
+                                          String meetingTitle, String projectName,
+                                          LocalDateTime meetingDate, String location,
+                                          String timeUntil) {
+        String subject = "[" + appName + "] Reminder: Meeting in " + timeUntil + " — " + meetingTitle;
+        String body = "Hi " + userName + ",\n\n"
+                + "This is a reminder that a meeting is coming up soon:\n\n"
+                + "  Meeting: " + meetingTitle + "\n"
+                + "  Project: " + projectName + "\n"
+                + "  Date:    " + meetingDate.toString() + "\n"
+                + "  Where:   " + (location != null ? location : "TBD") + "\n"
+                + "  Starts:  " + timeUntil + "\n\n"
+                + "Please make sure you're prepared and on time.\n\n"
+                + "Regards,\n" + appName;
+        send(toEmail, subject, body);
+    }
+
+    @Async
+    public void sendTaskDueSoonEmail(String toEmail, String userName,
+                                      String taskTitle, String projectName,
+                                      LocalDate dueDate, String timeUntil) {
+        String subject = "[" + appName + "] Task Due " + timeUntil + ": " + taskTitle;
+        String body = "Hi " + userName + ",\n\n"
+                + "A task assigned to you is due soon:\n\n"
+                + "  Task:    " + taskTitle + "\n"
+                + "  Project: " + projectName + "\n"
+                + "  Due:     " + dueDate.toString() + "\n"
+                + "  Due in:  " + timeUntil + "\n\n"
+                + "Please log in to update the task status.\n\n"
+                + "Regards,\n" + appName;
+        send(toEmail, subject, body);
+    }
+
+    @Async
+    public void sendMilestoneDueSoonEmail(String toEmail, String userName,
+                                           String milestoneTitle, String projectName,
+                                           LocalDate dueDate, String timeUntil) {
+        String subject = "[" + appName + "] Milestone Due " + timeUntil + ": " + milestoneTitle;
+        String body = "Hi " + userName + ",\n\n"
+                + "A milestone in your project is due soon:\n\n"
+                + "  Milestone: " + milestoneTitle + "\n"
+                + "  Project:   " + projectName + "\n"
+                + "  Due:       " + dueDate.toString() + "\n"
+                + "  Due in:    " + timeUntil + "\n\n"
+                + "Please log in to review progress.\n\n"
+                + "Regards,\n" + appName;
+        send(toEmail, subject, body);
+    }
+
+    @Async
     public void sendAccountStatusEmail(String toEmail, String userName, boolean enabled) {
         String state = enabled ? "re-enabled" : "disabled";
         String subject = "[" + appName + "] Your account has been " + state;
