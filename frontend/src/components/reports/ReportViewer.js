@@ -6,6 +6,7 @@ import { taskService, milestoneService } from '../../services/taskService';
 import { Button } from '../ui/button';
 import { Alert } from '../ui/alert';
 import { Card, CardHeader, CardTitle } from '../ui/card';
+import { BarChart2, Download, Mail, Printer, Loader2 } from 'lucide-react';
 
 export default function ReportViewer() {
   const { id: projectId } = useParams();
@@ -157,10 +158,13 @@ export default function ReportViewer() {
   const busy = loading || emailing;
 
   return (
-    <div>
+    <div className="animate-fade-up">
       <div className="flex justify-between items-center mb-7">
         <div>
-          <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight">📊 Project Report</h1>
+          <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight flex items-center gap-2">
+            <BarChart2 size={22} strokeWidth={2.2} className="text-[#3f51b5]" />
+            Project Report
+          </h1>
           <p className="text-[13px] text-gray-500 mt-0.5">Export or print a full project status report</p>
         </div>
       </div>
@@ -182,14 +186,17 @@ export default function ReportViewer() {
         {success && <Alert variant="success">{success}</Alert>}
 
         <div className="flex flex-wrap gap-3">
-          <Button variant="success" onClick={handleDownload} disabled={busy}>
-            {loading ? '⏳ Generating…' : '⬇ Download Excel'}
+          <Button variant="success" onClick={handleDownload} disabled={busy} className="flex items-center gap-2">
+            {loading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+            {loading ? 'Generating…' : 'Download Excel'}
           </Button>
-          <Button variant="primary" onClick={handleEmail} disabled={busy}>
-            {emailing ? '⏳ Sending…' : '✉ Email Report'}
+          <Button variant="primary" onClick={handleEmail} disabled={busy} className="flex items-center gap-2">
+            {emailing ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
+            {emailing ? 'Sending…' : 'Email Report'}
           </Button>
-          <Button variant="secondary" onClick={handlePrint} disabled={busy}>
-            🖨 Print Report
+          <Button variant="secondary" onClick={handlePrint} disabled={busy} className="flex items-center gap-2">
+            <Printer size={14} />
+            Print Report
           </Button>
         </div>
         <p className="mt-5 text-xs text-gray-400 border-t border-gray-100 pt-4">

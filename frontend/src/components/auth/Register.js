@@ -7,6 +7,7 @@ import { Label } from '../ui/label';
 import { Alert } from '../ui/alert';
 import { Select } from '../ui/select';
 import { FormGroup } from '../ui/form-group';
+import { LayoutDashboard, ShieldCheck, BarChart2, Mail, UserPlus, Loader2 } from 'lucide-react';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -32,34 +33,38 @@ export default function Register() {
     }
   };
 
+  const FEATURES = [
+    { Icon: ShieldCheck, text: 'Secure, role-based access' },
+    { Icon: BarChart2,   text: 'Real-time project dashboards' },
+    { Icon: Mail,        text: 'Automated report emails' },
+  ];
+
   return (
     <div className="min-h-screen flex">
-      {/* Left brand panel */}
       <div className="hidden lg:flex lg:w-[45%] bg-gradient-to-br from-[#3f51b5] via-[#5c6bc0] to-[#3949ab] flex-col items-center justify-center p-12 text-white">
-        <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-4xl mb-6 shadow-lg">📋</div>
+        <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+          <LayoutDashboard size={32} strokeWidth={1.8} className="text-white" />
+        </div>
         <h1 className="text-3xl font-bold mb-3 tracking-tight">Enterprise PM</h1>
         <p className="text-white/70 text-center text-base leading-relaxed max-w-xs">
           Join your team and start collaborating on projects from day one.
         </p>
         <div className="mt-10 space-y-3 w-full max-w-xs">
-          {[
-            ['🔒', 'Secure, role-based access'],
-            ['📊', 'Real-time project dashboards'],
-            ['📬', 'Automated report emails'],
-          ].map(([icon, text]) => (
+          {FEATURES.map(({ Icon, text }) => (
             <div key={text} className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-3">
-              <span className="text-lg">{icon}</span>
+              <Icon size={18} strokeWidth={2} className="text-white/80 shrink-0" />
               <span className="text-sm text-white/85">{text}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Right form panel */}
       <div className="flex-1 flex items-center justify-center bg-[#f0f2f8] p-8">
         <div className="w-full max-w-[420px]">
           <div className="lg:hidden text-center mb-8">
-            <div className="w-12 h-12 bg-[#3f51b5] rounded-xl flex items-center justify-center text-2xl mx-auto mb-3 shadow">📋</div>
+            <div className="w-12 h-12 bg-[#3f51b5] rounded-xl flex items-center justify-center mx-auto mb-3 shadow">
+              <LayoutDashboard size={22} strokeWidth={2} className="text-white" />
+            </div>
             <h1 className="text-xl font-bold text-[#1a237e]">Enterprise PM</h1>
           </div>
 
@@ -116,8 +121,10 @@ export default function Register() {
                   <option value="ADMIN">Admin</option>
                 </Select>
               </FormGroup>
-              <Button type="submit" variant="primary" size="full" disabled={loading} className="mt-2">
-                {loading ? 'Creating account…' : 'Create Account'}
+              <Button type="submit" variant="primary" size="full" disabled={loading} className="mt-2 flex items-center justify-center gap-2">
+                {loading
+                  ? <><Loader2 size={15} className="animate-spin" /> Creating account…</>
+                  : <><UserPlus size={15} /> Create Account</>}
               </Button>
             </form>
 

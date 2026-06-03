@@ -112,14 +112,10 @@ public class ProjectService {
         dto.setOwnerName(project.getOwner() != null ? project.getOwner().getName() : "");
         dto.setOwnerId(project.getOwner() != null ? project.getOwner().getId() : null);
         if (project.getMembers() != null) {
-            dto.setMemberIds(project.getMembers().stream()
-                    .distinct()
-                    .map(User::getId)
-                    .collect(Collectors.toList()));
-            dto.setMemberNames(project.getMembers().stream()
-                    .distinct()
-                    .map(User::getName)
-                    .collect(Collectors.toList()));
+            List<User> distinct = project.getMembers().stream().distinct().collect(Collectors.toList());
+            dto.setMemberIds(distinct.stream().map(User::getId).collect(Collectors.toList()));
+            dto.setMemberNames(distinct.stream().map(User::getName).collect(Collectors.toList()));
+            dto.setMemberRoles(distinct.stream().map(u -> u.getRole().name()).collect(Collectors.toList()));
         }
         dto.setTotalTasks((int) taskRepository.countByProjectId(project.getId()));
         dto.setCreatedAt(project.getCreatedAt());

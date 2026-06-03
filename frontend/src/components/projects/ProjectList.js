@@ -7,17 +7,17 @@ import { Badge } from '../ui/badge';
 import { Alert } from '../ui/alert';
 import { Card } from '../ui/card';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui/table';
+import { FolderOpen, Plus, Eye, Pencil, Trash2 } from 'lucide-react';
 
 const STATUS_FILTERS = ['All', 'ACTIVE', 'PLANNING', 'COMPLETED'];
-
-const STATUS_LABELS = { All: 'All', ACTIVE: 'Active', PLANNING: 'Planning', COMPLETED: 'Completed' };
+const STATUS_LABELS  = { All: 'All', ACTIVE: 'Active', PLANNING: 'Planning', COMPLETED: 'Completed' };
 
 export default function ProjectList() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [projects, setProjects]     = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [error, setError]           = useState('');
+  const [projects, setProjects]         = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
 
   useEffect(() => {
@@ -52,10 +52,13 @@ export default function ProjectList() {
   if (error) return <Alert variant="error">{error}</Alert>;
 
   return (
-    <div>
+    <div className="animate-fade-up">
       <div className="flex justify-between items-center mb-7">
         <div>
-          <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight">📁 Projects</h1>
+          <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight flex items-center gap-2">
+            <FolderOpen size={22} strokeWidth={2.2} className="text-[#3f51b5]" />
+            Projects
+          </h1>
           <p className="text-[13px] text-gray-500 mt-0.5">{filtered.length} project{filtered.length !== 1 ? 's' : ''}</p>
         </div>
         <div className="flex items-center gap-3">
@@ -75,7 +78,10 @@ export default function ProjectList() {
             ))}
           </div>
           {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
-            <Button variant="primary" onClick={() => navigate('/projects/new')}>+ New Project</Button>
+            <Button variant="primary" onClick={() => navigate('/projects/new')} className="flex items-center gap-1.5">
+              <Plus size={15} strokeWidth={2.5} />
+              New Project
+            </Button>
           )}
         </div>
       </div>
@@ -115,11 +121,29 @@ export default function ProjectList() {
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-1.5 items-center">
-                    <Button variant="ghost" size="sm" onClick={() => navigate(`/projects/${p.id}`)}>View</Button>
+                    <button
+                      onClick={() => navigate(`/projects/${p.id}`)}
+                      className="p-1.5 rounded-md text-gray-400 hover:text-[#3f51b5] hover:bg-[#e8eaf6] transition-colors"
+                      title="View project"
+                    >
+                      <Eye size={15} strokeWidth={2} />
+                    </button>
                     {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
                       <>
-                        <Button variant="warning" size="sm" onClick={() => navigate(`/projects/${p.id}/edit`)}>Edit</Button>
-                        <Button variant="danger"  size="sm" onClick={() => handleDelete(p.id)}>Delete</Button>
+                        <button
+                          onClick={() => navigate(`/projects/${p.id}/edit`)}
+                          className="p-1.5 rounded-md text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                          title="Edit project"
+                        >
+                          <Pencil size={15} strokeWidth={2} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(p.id)}
+                          className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                          title="Delete project"
+                        >
+                          <Trash2 size={15} strokeWidth={2} />
+                        </button>
                       </>
                     )}
                   </div>

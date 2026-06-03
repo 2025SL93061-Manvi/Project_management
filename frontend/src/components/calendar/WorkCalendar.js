@@ -9,6 +9,10 @@ import { Alert } from '../ui/alert';
 import { Card, CardHeader, CardTitle } from '../ui/card';
 import { FormGroup } from '../ui/form-group';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui/table';
+import {
+  CalendarDays, Plus, X, ChevronLeft, ChevronRight,
+  PartyPopper, CalendarCheck, Trash2
+} from 'lucide-react';
 
 const MONTH_NAMES = [
   'January','February','March','April','May','June',
@@ -78,7 +82,6 @@ export default function WorkCalendar() {
     return acc;
   }, {});
 
-  // Group events by date — each date key holds an array of events
   const eventMap = events.reduce((acc, e) => {
     if (!acc[e.date]) acc[e.date] = [];
     acc[e.date].push(e);
@@ -102,18 +105,20 @@ export default function WorkCalendar() {
       <div className="text-gray-400 animate-pulse">Loading calendar…</div>
     </div>
   );
-  
 
   return (
-    <div>
+    <div className="animate-fade-up">
       <div className="flex justify-between items-center mb-7">
         <div>
-          <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight">📅 Work Calendar</h1>
+          <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight flex items-center gap-2">
+            <CalendarDays size={22} strokeWidth={2.2} className="text-[#3f51b5]" />
+            Work Calendar
+          </h1>
           <p className="text-[13px] text-gray-500 mt-0.5">{holidays.length} holiday{holidays.length !== 1 ? 's' : ''} configured</p>
         </div>
         {isAdmin && (
-          <Button variant="primary" onClick={() => setShowForm(!showForm)}>
-            {showForm ? 'Cancel' : '+ Add Holiday'}
+          <Button variant={showForm ? 'secondary' : 'primary'} onClick={() => setShowForm(!showForm)} className="flex items-center gap-1.5">
+            {showForm ? <><X size={14} /> Cancel</> : <><Plus size={15} strokeWidth={2.5} /> Add Holiday</>}
           </Button>
         )}
       </div>
@@ -147,18 +152,24 @@ export default function WorkCalendar() {
               </FormGroup>
             </div>
             <div className="flex gap-3">
-              <Button type="submit" variant="primary">Add Holiday</Button>
+              <Button type="submit" variant="primary" className="flex items-center gap-1.5">
+                <Plus size={14} strokeWidth={2.5} /> Add Holiday
+              </Button>
               <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>Cancel</Button>
             </div>
           </form>
         </Card>
       )}
 
-      {/* Calendar card */}
       <Card>
-        {/* Navigation */}
         <div className="flex items-center justify-between mb-5">
-          <Button variant="secondary" size="sm" onClick={prevMonth}>← Prev</Button>
+          <button
+            onClick={prevMonth}
+            className="p-2 rounded-lg text-gray-500 hover:text-[#3f51b5] hover:bg-[#e8eaf6] transition-colors"
+            title="Previous month"
+          >
+            <ChevronLeft size={18} strokeWidth={2} />
+          </button>
 
           <div className="flex items-center gap-2">
             <Select
@@ -186,17 +197,21 @@ export default function WorkCalendar() {
             </Button>
           </div>
 
-          <Button variant="secondary" size="sm" onClick={nextMonth}>Next →</Button>
+          <button
+            onClick={nextMonth}
+            className="p-2 rounded-lg text-gray-500 hover:text-[#3f51b5] hover:bg-[#e8eaf6] transition-colors"
+            title="Next month"
+          >
+            <ChevronRight size={18} strokeWidth={2} />
+          </button>
         </div>
 
-        {/* Day labels */}
         <div className="grid grid-cols-7 gap-1 mb-2">
           {DAY_LABELS.map(d => (
             <div key={d} className="text-center text-[11px] font-bold text-gray-400 uppercase tracking-wider py-1">{d}</div>
           ))}
         </div>
 
-        {/* Day cells */}
         <div className="grid grid-cols-7 gap-1">
           {Array.from({ length: firstDay }).map((_, i) => <div key={`e${i}`} />)}
           {Array.from({ length: daysInMonth }).map((_, i) => {
@@ -229,8 +244,8 @@ export default function WorkCalendar() {
             }
 
             const titleParts = [
-              holiday ? `🎉 ${holiday.name}` : '',
-              ...dayEvents.map(e => e.type === 'MEETING' ? `${e.title}` : `${e.title}`),
+              holiday ? holiday.name : '',
+              ...dayEvents.map(e => e.title),
             ].filter(Boolean).join('\n');
 
             return (
@@ -238,7 +253,7 @@ export default function WorkCalendar() {
                 <span className="leading-none">{day}</span>
                 {holiday && (
                   <span className="text-[8px] text-amber-700 font-bold leading-tight text-center px-1 truncate w-full">
-                    🎉 {holiday.name}
+                    {holiday.name}
                   </span>
                 )}
                 {dayEvents.map(e => (
@@ -248,7 +263,7 @@ export default function WorkCalendar() {
                       e.type === 'MEETING' ? 'text-blue-600' : 'text-purple-600'
                     }`}
                   >
-                    {e.type === 'MEETING' ? '' : ''} {e.title}
+                    {e.title}
                   </span>
                 ))}
               </div>
@@ -257,11 +272,15 @@ export default function WorkCalendar() {
         </div>
       </Card>
 
-      {/* Holiday list for current month */}
       {monthHolidays.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>🎉 Holidays in {MONTH_NAMES[month]} {year}</CardTitle>
+            <CardTitle>
+              <span className="flex items-center gap-1.5">
+                <PartyPopper size={15} className="text-amber-500" />
+                Holidays in {MONTH_NAMES[month]} {year}
+              </span>
+            </CardTitle>
             <span className="text-xs text-gray-400 font-medium">{monthHolidays.length} holiday{monthHolidays.length !== 1 ? 's' : ''}</span>
           </CardHeader>
           <Table>
@@ -276,12 +295,18 @@ export default function WorkCalendar() {
             <TableBody>
               {monthHolidays.map(([d, h]) => (
                 <TableRow key={d}>
-                  <TableCell className="font-medium text-gray-800">🎉 {h.name}</TableCell>
+                  <TableCell className="font-medium text-gray-800">{h.name}</TableCell>
                   <TableCell className="text-gray-500">{d}</TableCell>
                   <TableCell className="text-gray-500">{new Date(d + 'T00:00:00').toLocaleDateString('default', { weekday: 'long' })}</TableCell>
                   {isAdmin && (
                     <TableCell>
-                      <Button variant="danger" size="sm" onClick={() => handleDelete(h.id)}>Remove</Button>
+                      <button
+                        onClick={() => handleDelete(h.id)}
+                        className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        title="Remove holiday"
+                      >
+                        <Trash2 size={15} strokeWidth={2} />
+                      </button>
                     </TableCell>
                   )}
                 </TableRow>
@@ -297,11 +322,15 @@ export default function WorkCalendar() {
         </Card>
       )}
 
-      {/* Events (meetings + milestones) for current month */}
       {monthEvents.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>📋 Events in {MONTH_NAMES[month]} {year}</CardTitle>
+            <CardTitle>
+              <span className="flex items-center gap-1.5">
+                <CalendarCheck size={15} className="text-[#3f51b5]" />
+                Events in {MONTH_NAMES[month]} {year}
+              </span>
+            </CardTitle>
             <span className="text-xs text-gray-400 font-medium">{monthEvents.length} event{monthEvents.length !== 1 ? 's' : ''}</span>
           </CardHeader>
           <Table>
@@ -316,9 +345,7 @@ export default function WorkCalendar() {
             <TableBody>
               {monthEvents.map(e => (
                 <TableRow key={`${e.type}-${e.id}`}>
-                  <TableCell className="font-medium text-gray-800">
-                    {e.type === 'MEETING' ? '🔵' : '🟣'} {e.title}
-                  </TableCell>
+                  <TableCell className="font-medium text-gray-800">{e.title}</TableCell>
                   <TableCell>
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                       e.type === 'MEETING'

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { taskService } from '../../services/taskService';
 import { projectService } from '../../services/projectService';
@@ -15,6 +15,7 @@ import { Card } from '../ui/card';
 import { FormGroup } from '../ui/form-group';
 import { Modal } from '../ui/modal';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui/table';
+import { ClipboardList, Plus, Pencil, Trash2, AlertTriangle } from 'lucide-react';
 
 export default function TaskList() {
   const { id: projectId } = useParams();
@@ -30,8 +31,19 @@ export default function TaskList() {
     startDate:'', endDate:'', assigneeIds: [], projectId
   });
   const [error, setError] = useState('');
-
   const [filter, setFilter] = useState('ALL');
+  const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false);
+  const assigneeDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (assigneeDropdownRef.current && !assigneeDropdownRef.current.contains(e.target)) {
+        setAssigneeDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const canManage = user?.role === 'ADMIN' || user?.role === 'MANAGER' || user?.role === 'DEVELOPER';
   const canDelete = user?.role === 'ADMIN' || user?.role === 'MANAGER' || user?.role === 'DEVELOPER';
@@ -47,19 +59,35 @@ export default function TaskList() {
       .then(res => setTasks(res.data))
       .finally(() => setLoading(false));
 
-    Promise.all([
-      api.get('/users'),
-      projectService.getById(projectId)
-    ]).then(([usersRes, projectRes]) => {
-      const memberIds = projectRes.data.memberIds ?? [];
-      const ownerIds = projectRes.data.ownerId ? [Number(projectRes.data.ownerId)] : [];
-      const allowed = new Set([...memberIds.map(Number), ...ownerIds]);
-      setUsers(usersRes.data.filter(u => allowed.has(Number(u.id))));
+    projectService.getById(projectId).then(projectRes => {
+      const memberIds   = (projectRes.data.memberIds   ?? []).map(Number);
+      const memberNames = projectRes.data.memberNames  ?? [];
+      const memberRoles = projectRes.data.memberRoles  ?? [];
+      const ownerId   = projectRes.data.ownerId   ? Number(projectRes.data.ownerId)  : null;
+      const ownerName = projectRes.data.ownerName || '';
+      const ownerRole = projectRes.data.ownerRole || '';
+
+      const membersFromProject = memberIds.map((id, i) => ({
+        id, name: memberNames[i] || `User ${id}`, role: memberRoles[i] || ''
+      }));
+      if (ownerId && !memberIds.includes(ownerId)) {
+        membersFromProject.push({ id: ownerId, name: ownerName, role: ownerRole });
+      }
+
+      api.get('/users')
+        .then(usersRes => {
+          const allowed = new Set([...memberIds, ...(ownerId ? [ownerId] : [])]);
+          setUsers(usersRes.data.filter(u => allowed.has(Number(u.id))));
+        })
+        .catch(() => {
+          setUsers(membersFromProject);
+        });
     }).catch(() => {});
   }, [projectId]);
 
   const openCreate = () => {
     setEditTask(null);
+    setAssigneeDropdownOpen(false);
     setForm({ title:'', description:'', status:'TODO', priority:'MEDIUM',
       startDate:'', endDate:'', assigneeIds: [], projectId });
     setShowModal(true);
@@ -67,6 +95,7 @@ export default function TaskList() {
 
   const openEdit = (task) => {
     setEditTask(task);
+    setAssigneeDropdownOpen(false);
     setForm({
       title: task.title, description: task.description || '',
       status: task.status, priority: task.priority,
@@ -140,13 +169,21 @@ export default function TaskList() {
   );
 
   return (
-    <div>
+    <div className="animate-fade-up">
       <div className="flex justify-between items-center mb-5">
         <div>
-          <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight">📋 Tasks</h1>
+          <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight flex items-center gap-2">
+            <ClipboardList size={22} strokeWidth={2.2} className="text-[#3f51b5]" />
+            Tasks
+          </h1>
           <p className="text-[13px] text-gray-500 mt-0.5">{filteredTasks.length} of {tasks.length} task{tasks.length !== 1 ? 's' : ''}</p>
         </div>
-        {canManage && <Button variant="primary" onClick={openCreate}>+ Add Task</Button>}
+        {canManage && (
+          <Button variant="primary" onClick={openCreate} className="flex items-center gap-1.5">
+            <Plus size={16} strokeWidth={2.5} />
+            Add Task
+          </Button>
+        )}
       </div>
       <div className="flex gap-1 mb-5 bg-gray-100 rounded-lg p-1 w-fit">
         {[['ALL', 'All'], ['ACTIVE', 'Active'], ['DONE', 'Completed']].map(([val, label]) => (
@@ -208,9 +245,21 @@ export default function TaskList() {
                 <TableCell className="text-gray-500">{t.endDate || '—'}</TableCell>
                 <TableCell>
                   <div className="flex gap-1.5 items-center">
-                    <Button variant="ghost" size="sm" onClick={() => openEdit(t)}>Edit</Button>
+                    <button
+                      onClick={() => openEdit(t)}
+                      className="p-1.5 rounded-md text-gray-500 hover:text-[#3f51b5] hover:bg-[#e8eaf6] transition-colors"
+                      title="Edit task"
+                    >
+                      <Pencil size={15} strokeWidth={2} />
+                    </button>
                     {canDelete && (
-                      <Button variant="danger" size="sm" onClick={() => setDeleteTarget(t.id)}>Delete</Button>
+                      <button
+                        onClick={() => setDeleteTarget(t.id)}
+                        className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        title="Delete task"
+                      >
+                        <Trash2 size={15} strokeWidth={2} />
+                      </button>
                     )}
                   </div>
                 </TableCell>
@@ -261,37 +310,87 @@ export default function TaskList() {
           </div>
           <FormGroup>
             <Label>Assign To</Label>
-            <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-2 bg-gray-50 space-y-1">
-              {users.length === 0 && <span className="text-[13px] text-gray-400">No users available</span>}
-              {users.map(u => (
-                <label key={u.id} className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg cursor-pointer text-[13px] transition-colors ${form.assigneeIds.includes(u.id) ? 'bg-blue-50' : 'hover:bg-white'}`}>
-                  <input
-                    type="checkbox"
-                    checked={form.assigneeIds.includes(u.id)}
-                    onChange={() => handleAssigneeToggle(u.id)}
-                    className="accent-[#3f51b5] w-4 h-4 flex-shrink-0"
-                  />
-                  <span className="font-medium text-gray-800">{u.name}</span>
-                  <span className="text-gray-400 text-xs">({u.role})</span>
-                </label>
-              ))}
+            <div className="relative" ref={assigneeDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setAssigneeDropdownOpen(prev => !prev)}
+                className="w-full flex items-center justify-between gap-2 px-3 py-2 text-[13px] border border-gray-200 rounded-lg bg-white hover:border-[#3f51b5] focus:outline-none focus:ring-2 focus:ring-[#3f51b5]/20 transition-colors"
+              >
+                <span className={form.assigneeIds.length === 0 ? 'text-gray-400' : 'text-gray-800 font-medium'}>
+                  {form.assigneeIds.length === 0
+                    ? 'Select members…'
+                    : `${form.assigneeIds.length} member${form.assigneeIds.length > 1 ? 's' : ''} selected`}
+                </span>
+                <svg className={`w-4 h-4 text-gray-400 transition-transform ${assigneeDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {assigneeDropdownOpen && (
+                <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-slide-down">
+                  <div className="max-h-44 overflow-y-auto py-1">
+                    {users.length === 0 && (
+                      <div className="px-3 py-2 text-[13px] text-gray-400">No users available</div>
+                    )}
+                    {users.map(u => {
+                      const checked = form.assigneeIds.includes(Number(u.id));
+                      return (
+                        <label
+                          key={u.id}
+                          className={`flex items-center gap-3 px-3 py-2 cursor-pointer text-[13px] transition-colors ${checked ? 'bg-[#e8eaf6]' : 'hover:bg-gray-50'}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => handleAssigneeToggle(u.id)}
+                            className="accent-[#3f51b5] w-4 h-4 flex-shrink-0 rounded"
+                          />
+                          <span className="font-medium text-gray-800 flex-1">{u.name}</span>
+                          <span className="text-[11px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded font-medium">{u.role}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {form.assigneeIds.length > 0 && (
+                    <div className="border-t border-gray-100 px-3 py-2 bg-gray-50 flex items-center justify-between">
+                      <span className="text-[12px] text-[#3f51b5] font-medium truncate max-w-[75%]">
+                        {users.filter(u => form.assigneeIds.includes(Number(u.id))).map(u => u.name).join(', ')}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setForm(prev => ({ ...prev, assigneeIds: [] }))}
+                        className="text-[11px] text-gray-400 hover:text-red-500 font-medium ml-2 shrink-0"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            {form.assigneeIds.length > 0 && (
-              <p className="text-xs text-[#3f51b5] mt-1.5">
-                Selected: {users.filter(u => form.assigneeIds.includes(u.id)).map(u => u.name).join(', ')}
-              </p>
-            )}
           </FormGroup>
           <div className="flex gap-3 pt-2 border-t border-gray-100">
-            <Button type="submit" variant="primary">{editTask ? 'Update Task' : 'Create Task'}</Button>
+            <Button type="submit" variant="primary" className="flex items-center gap-1.5">
+              {editTask
+                ? <><Pencil size={14} strokeWidth={2} /> Update Task</>
+                : <><Plus size={14} strokeWidth={2.5} /> Create Task</>}
+            </Button>
             <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
           </div>
         </form>
       </Modal>
       <Modal show={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Delete Task">
-        <p className="text-[14px] text-gray-600 mb-6">Are you sure you want to delete this task? This action cannot be undone.</p>
+        <div className="flex items-start gap-3 mb-5">
+          <div className="flex-shrink-0 w-9 h-9 rounded-full bg-red-50 flex items-center justify-center">
+            <AlertTriangle size={18} strokeWidth={2} className="text-red-500" />
+          </div>
+          <p className="text-[14px] text-gray-600 pt-1.5">Are you sure you want to delete this task? This action cannot be undone.</p>
+        </div>
         <div className="flex gap-3 pt-2 border-t border-gray-100">
-          <Button variant="danger" onClick={handleDelete}>Yes, Delete</Button>
+          <Button variant="danger" onClick={handleDelete} className="flex items-center gap-1.5">
+            <Trash2 size={14} strokeWidth={2} />
+            Delete
+          </Button>
           <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Cancel</Button>
         </div>
       </Modal>

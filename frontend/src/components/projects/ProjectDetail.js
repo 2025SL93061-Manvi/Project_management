@@ -8,13 +8,14 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Card, CardHeader, CardTitle } from '../ui/card';
 import { Alert } from '../ui/alert';
+import { ClipboardList, Flag, CalendarDays, FolderOpen, BarChart2, User, Pencil } from 'lucide-react';
 
 const NAV_CARDS = [
-  { key: 'tasks',      emoji: '📋', label: 'Tasks',      color: 'blue',   path: 'tasks'      },
-  { key: 'milestones', emoji: '🏁', label: 'Milestones', color: 'green',  path: 'milestones' },
-  { key: 'meetings',   emoji: '📅', label: 'Meetings',   color: 'amber',  path: 'meetings'   },
-  { key: 'files',      emoji: '📂', label: 'Files',      color: 'violet', path: 'files'      },
-  { key: 'report',     emoji: '📊', label: 'Reports',    color: 'indigo', path: 'report'     },
+  { key: 'tasks',      Icon: ClipboardList, label: 'Tasks',      color: 'blue',   path: 'tasks'      },
+  { key: 'milestones', Icon: Flag,          label: 'Milestones', color: 'green',  path: 'milestones' },
+  { key: 'meetings',   Icon: CalendarDays,  label: 'Meetings',   color: 'amber',  path: 'meetings'   },
+  { key: 'files',      Icon: FolderOpen,    label: 'Files',      color: 'violet', path: 'files'      },
+  { key: 'report',     Icon: BarChart2,     label: 'Reports',    color: 'indigo', path: 'report'     },
 ];
 
 const COLOR = {
@@ -54,7 +55,7 @@ export default function ProjectDetail() {
     });
   }, [id]);
 
-  if (loading)  return (
+  if (loading) return (
     <div className="flex items-center justify-center py-20">
       <div className="text-gray-400 animate-pulse">Loading project…</div>
     </div>
@@ -64,7 +65,7 @@ export default function ProjectDetail() {
   const canEdit = user?.role === 'ADMIN' || user?.role === 'MANAGER';
 
   return (
-    <div>
+    <div className="animate-fade-up">
       <div className="flex justify-between items-start mb-7">
         <div>
           <div className="flex items-center gap-3 mb-1.5">
@@ -74,7 +75,10 @@ export default function ProjectDetail() {
           <p className="text-[13px] text-gray-500">Owner: <span className="font-medium text-gray-700">{project.ownerName}</span></p>
         </div>
         {canEdit && (
-          <Button variant="warning" onClick={() => navigate(`/projects/${id}/edit`)}>Edit Project</Button>
+          <Button variant="warning" onClick={() => navigate(`/projects/${id}/edit`)} className="flex items-center gap-1.5">
+            <Pencil size={14} strokeWidth={2} />
+            Edit Project
+          </Button>
         )}
       </div>
 
@@ -97,8 +101,9 @@ export default function ProjectDetail() {
               {project.memberNames && project.memberNames.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {project.memberNames.map((name, i) => (
-                    <span key={i} className="inline-flex items-center gap-1 text-[12px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-full px-2.5 py-0.5">
-                      👤 {name}
+                    <span key={i} className="inline-flex items-center gap-1.5 text-[12px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-full px-2.5 py-0.5">
+                      <User size={11} strokeWidth={2} />
+                      {name}
                     </span>
                   ))}
                 </div>
@@ -126,15 +131,14 @@ export default function ProjectDetail() {
         </div>
       </Card>
 
-      {/* Navigation cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-        {NAV_CARDS.map(({ key, emoji, label, color, path }) => (
+        {NAV_CARDS.map(({ key, Icon, label, color, path }) => (
           <button
             key={key}
             onClick={() => navigate(`/projects/${id}/${path}`)}
-            className={`${COLOR[color]} border rounded-xl p-5 text-left transition-all duration-150 hover:shadow-md active:scale-[0.98] cursor-pointer`}
+            className={`${COLOR[color]} border rounded-xl p-5 text-left transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer`}
           >
-            <div className="text-3xl mb-2">{emoji}</div>
+            <Icon size={26} strokeWidth={1.8} className="mb-2" />
             <div className="text-[13px] font-bold">{label}</div>
             {counts[key] !== undefined && (
               <div className="text-2xl font-extrabold mt-1">{counts[key]}</div>

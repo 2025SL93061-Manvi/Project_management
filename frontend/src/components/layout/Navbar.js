@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/button';
@@ -9,20 +9,34 @@ import { Label } from '../ui/label';
 import { FormGroup } from '../ui/form-group';
 import { Alert } from '../ui/alert';
 import api from '../../services/api';
+import { LayoutDashboard, Pencil, LogOut, Save } from 'lucide-react';
 
 export default function Navbar() {
   const { user, login, logout } = useAuth();
   const navigate = useNavigate();
 
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({ name: '', email: '' });
   const [profileError, setProfileError] = useState('');
   const [profileSuccess, setProfileSuccess] = useState('');
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const openProfile = () => {
     setProfileForm({ name: user?.name || '', email: user?.email || '' });
     setProfileError('');
     setProfileSuccess('');
+    setDropdownOpen(false);
     setShowProfile(true);
   };
 
@@ -57,7 +71,9 @@ export default function Navbar() {
 
         {/* Brand */}
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-lg shadow-sm">📋</div>
+          <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center shadow-sm">
+            <LayoutDashboard size={16} strokeWidth={2} className="text-white" />
+          </div>
           <span className="text-[16px] font-bold tracking-tight">Enterprise PM</span>
         </div>
 
@@ -69,24 +85,59 @@ export default function Navbar() {
           {user?.role === 'ADMIN' && (
             <NavLink to="/admin" className={navLinkClass}>Admin</NavLink>
           )}
-          {user?.role !== 'ADMIN' && (
-            <NavLink to="/admin" className={navLinkClass}>My Complaints</NavLink>
+          {(user?.role === 'MANAGER' || user?.role === 'DEVELOPER') && (
+            <NavLink to="/admin" className={navLinkClass}>My Submissions</NavLink>
           )}
         </div>
 
         {/* User section */}
         <div className="flex items-center gap-3">
-          <button
-            onClick={openProfile}
-            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 rounded-lg px-3 py-1.5 transition-all duration-150 cursor-pointer"
-          >
-            <div className="w-6 h-6 bg-white/30 rounded-full flex items-center justify-center text-xs font-bold">
+          <div className="relative" ref={dropdownRef}>
+            {/* Avatar circle — only initial shown by default */}
+            <button
+              onClick={() => setDropdownOpen(prev => !prev)}
+              className="w-9 h-9 bg-white/30 hover:bg-white/40 rounded-full flex items-center justify-center text-sm font-bold text-white transition-all duration-150 cursor-pointer shadow-sm"
+              title={user?.name}
+            >
               {user?.name?.charAt(0)?.toUpperCase()}
-            </div>
-            <span className="text-[13px] font-medium text-white/90">{user?.name}</span>
-            <RoleBadge role={user?.role} />
-          </button>
-          <Button variant="outline" size="sm" onClick={handleLogout}>Logout</Button>
+            </button>
+
+            {/* Dropdown panel */}
+            {dropdownOpen && (
+              <div className="absolute right-0 top-[calc(100%+8px)] w-52 bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-gray-100 z-[200] overflow-hidden animate-slide-down">
+                {/* User info header */}
+                <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 bg-[#3f51b5] rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0">
+                      {user?.name?.charAt(0)?.toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-semibold text-gray-800 truncate">{user?.name}</p>
+                      <div className="mt-0.5">
+                        <RoleBadge role={user?.role} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="py-1">
+                  <button
+                    onClick={openProfile}
+                    className="w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                  >
+                    <Pencil size={14} strokeWidth={2} className="text-gray-400" />
+                    Edit Profile
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <Button variant="outline" size="sm" onClick={handleLogout} className="flex items-center gap-1.5">
+            <LogOut size={13} strokeWidth={2} />
+            Logout
+          </Button>
         </div>
       </nav>
 
@@ -119,7 +170,9 @@ export default function Navbar() {
             />
           </FormGroup>
           <div className="flex gap-3 pt-2 border-t border-gray-100">
-            <Button type="submit" variant="primary">Save Changes</Button>
+            <Button type="submit" variant="primary" className="flex items-center gap-1.5">
+              <Save size={14} /> Save Changes
+            </Button>
             <Button type="button" variant="secondary" onClick={() => setShowProfile(false)}>Cancel</Button>
           </div>
         </form>

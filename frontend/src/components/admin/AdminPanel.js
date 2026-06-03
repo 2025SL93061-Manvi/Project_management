@@ -13,6 +13,10 @@ import { Card, CardHeader, CardTitle } from '../ui/card';
 import { FormGroup } from '../ui/form-group';
 import { Modal } from '../ui/modal';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui/table';
+import {
+  Settings, Users, MessageSquareWarning, UserRound,
+  Plus, Pencil, Trash2, AlertTriangle, Save, Send
+} from 'lucide-react';
 
 export default function AdminPanel() {
   const { user } = useAuth();
@@ -20,7 +24,6 @@ export default function AdminPanel() {
 
   const [tab, setTab] = useState(isAdmin ? 'users' : 'my');
 
-  // ── User management state (admin) ────────────────────────────────────────
   const [users, setUsers]               = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [roleFilter, setRoleFilter]     = useState('ALL');
@@ -30,19 +33,16 @@ export default function AdminPanel() {
   const [userForm, setUserForm]         = useState(EMPTY_USER_FORM);
   const [userError, setUserError]       = useState('');
 
-  // ── All complaints state (admin) ─────────────────────────────────────────
   const [complaints, setComplaints]     = useState([]);
   const [compLoading, setCompLoading]   = useState(false);
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [typeFilter, setTypeFilter]     = useState('ALL');
 
-  // ── My complaints state (all users) ──────────────────────────────────────
   const [myComplaints, setMyComplaints] = useState([]);
   const [myLoading, setMyLoading]       = useState(false);
   const [myStatusFilter, setMyStatusFilter] = useState('ALL');
   const [myTypeFilter, setMyTypeFilter] = useState('ALL');
 
-  // ── Create / edit modal ───────────────────────────────────────────────────
   const [showModal, setShowModal]         = useState(false);
   const [editComplaint, setEditComplaint] = useState(null);
   const EMPTY_FORM = { title: '', description: '', type: 'COMPLAINT' };
@@ -73,7 +73,6 @@ export default function AdminPanel() {
     }
   }, [tab, isAdmin]);
 
-  // ── User handlers ─────────────────────────────────────────────────────────
   const handleToggleUser = async (id) => {
     await adminService.toggleUser(id);
     setUsers(users.map(u => u.id === id ? { ...u, enabled: !u.enabled } : u));
@@ -98,15 +97,12 @@ export default function AdminPanel() {
     } catch { setUserError('Failed to update user'); }
   };
 
-  // ── Admin complaint handlers ───────────────────────────────────────────────
   const handleStatusChange = async (id, status) => {
     const res = await adminService.updateStatus(id, status);
     setComplaints(complaints.map(c => c.id === id ? res.data : c));
   };
 
-  const handleDeleteComplaint = (id) => {
-    setDeleteTarget(id);
-  };
+  const handleDeleteComplaint = (id) => setDeleteTarget(id);
 
   const confirmDelete = async () => {
     try {
@@ -119,7 +115,6 @@ export default function AdminPanel() {
     }
   };
 
-  // ── My complaint handlers (manager / developer) ────────────────────────────
   const handleCreateComplaint = async (e) => {
     e.preventDefault();
     setError('');
@@ -147,56 +142,61 @@ export default function AdminPanel() {
   };
 
   return (
-    <div>
+    <div className="animate-fade-up">
       <div className="flex justify-between items-center mb-7">
         <div>
-          <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight">
-            ⚙️ {isAdmin ? 'Admin Panel' : 'My Interactions'}
+          <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight flex items-center gap-2">
+            <Settings size={22} strokeWidth={2.2} className="text-[#3f51b5]" />
+            {isAdmin ? 'Admin Panel' : 'My Interactions'}
           </h1>
           <p className="text-[13px] text-gray-500 mt-0.5">
             {isAdmin ? 'Manage users and handle complaints' : 'Submit and track your complaints'}
           </p>
         </div>
         {tab === 'my' && !isAdmin && (
-          <Button variant="primary" onClick={() => setShowModal(true)}>
-            + Submit Complaint / Feedback
+          <Button variant="primary" onClick={() => setShowModal(true)} className="flex items-center gap-1.5">
+            <Plus size={15} strokeWidth={2.5} />
+            Submit Complaint / Feedback
           </Button>
         )}
       </div>
 
-      {/* Tab bar */}
       <div className="flex gap-2 mb-5 p-1 bg-gray-100 rounded-xl w-fit">
         {isAdmin && (
           <button
             onClick={() => setTab('users')}
-            className={`px-4 py-2 rounded-lg text-[13px] font-semibold transition-all duration-150 ${
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all duration-150 ${
               tab === 'users' ? 'bg-white text-[#1a237e] shadow-sm' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            👥 User Management
+            <Users size={14} strokeWidth={2} />
+            User Management
           </button>
         )}
         {isAdmin && (
           <button
             onClick={() => setTab('complaints')}
-            className={`px-4 py-2 rounded-lg text-[13px] font-semibold transition-all duration-150 ${
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all duration-150 ${
               tab === 'complaints' ? 'bg-white text-[#1a237e] shadow-sm' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            📝 All Complaints &amp; Feedback
+            <MessageSquareWarning size={14} strokeWidth={2} />
+            All Complaints &amp; Feedback
           </button>
         )}
-        <button
-          onClick={() => setTab('my')}
-          className={`px-4 py-2 rounded-lg text-[13px] font-semibold transition-all duration-150 ${
-            tab === 'my' ? 'bg-white text-[#1a237e] shadow-sm' : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          🙋 My Submissions
-        </button>
+        {!isAdmin && (
+          <button
+            onClick={() => setTab('my')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all duration-150 ${
+              tab === 'my' ? 'bg-white text-[#1a237e] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <UserRound size={14} strokeWidth={2} />
+            My Submissions
+          </button>
+        )}
       </div>
 
-      {/* ── User Management (admin only) ───────────────────────────────────── */}
       {tab === 'users' && isAdmin && (
         <Card>
           <CardHeader>
@@ -255,7 +255,13 @@ export default function AdminPanel() {
                             {u.enabled ? 'Disable' : 'Enable'}
                           </Button>
                         )}
-                        <Button variant="ghost" size="sm" onClick={() => openEditUser(u)}>Edit</Button>
+                        <button
+                          onClick={() => openEditUser(u)}
+                          className="p-1.5 rounded-md text-gray-400 hover:text-[#3f51b5] hover:bg-[#e8eaf6] transition-colors"
+                          title="Edit user"
+                        >
+                          <Pencil size={15} strokeWidth={2} />
+                        </button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -266,7 +272,6 @@ export default function AdminPanel() {
         </Card>
       )}
 
-      {/* ── All Complaints (admin only) ────────────────────────────────────── */}
       {tab === 'complaints' && isAdmin && (
         <Card>
           <CardHeader>
@@ -346,9 +351,13 @@ export default function AdminPanel() {
                     </TableCell>
                     <TableCell>
                       {c.status !== 'DELETED' && (
-                        <Button variant="danger" size="sm" onClick={() => handleDeleteComplaint(c.id)}>
-                          Delete
-                        </Button>
+                        <button
+                          onClick={() => handleDeleteComplaint(c.id)}
+                          className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                          title="Delete complaint"
+                        >
+                          <Trash2 size={15} strokeWidth={2} />
+                        </button>
                       )}
                     </TableCell>
                   </TableRow>
@@ -359,7 +368,6 @@ export default function AdminPanel() {
         </Card>
       )}
 
-      {/* ── My Submissions (all roles) ─────────────────────────────────────── */}
       {tab === 'my' && (
         <Card>
           <CardHeader>
@@ -422,7 +430,13 @@ export default function AdminPanel() {
                     <TableCell className="text-gray-500">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—'}</TableCell>
                     {!isAdmin && (
                       <TableCell>
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(c)}>Edit</Button>
+                        <button
+                          onClick={() => openEdit(c)}
+                          className="p-1.5 rounded-md text-gray-400 hover:text-[#3f51b5] hover:bg-[#e8eaf6] transition-colors"
+                          title="Edit submission"
+                        >
+                          <Pencil size={15} strokeWidth={2} />
+                        </button>
                       </TableCell>
                     )}
                   </TableRow>
@@ -433,7 +447,6 @@ export default function AdminPanel() {
         </Card>
       )}
 
-      {/* ── Edit User Modal ───────────────────────────────────────────────── */}
       <Modal show={showUserModal} onClose={closeUserModal} title="Edit User">
         {userError && <Alert variant="error">{userError}</Alert>}
         <form onSubmit={handleEditUser} className="space-y-4">
@@ -465,13 +478,14 @@ export default function AdminPanel() {
             </Select>
           </FormGroup>
           <div className="flex gap-3 pt-2 border-t border-gray-100">
-            <Button type="submit" variant="primary">Save Changes</Button>
+            <Button type="submit" variant="primary" className="flex items-center gap-1.5">
+              <Save size={14} /> Save Changes
+            </Button>
             <Button type="button" variant="secondary" onClick={closeUserModal}>Cancel</Button>
           </div>
         </form>
       </Modal>
 
-      {/* ── Create / Edit Complaint Modal (non-admin only) ────────────────── */}
       <Modal
         show={showModal}
         onClose={closeModal}
@@ -506,20 +520,27 @@ export default function AdminPanel() {
             />
           </FormGroup>
           <div className="flex gap-3 pt-2 border-t border-gray-100">
-            <Button type="submit" variant="primary">
-              {editComplaint ? 'Update' : 'Submit'}
+            <Button type="submit" variant="primary" className="flex items-center gap-1.5">
+              {editComplaint ? <><Pencil size={14} /> Update</> : <><Send size={14} /> Submit</>}
             </Button>
             <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
           </div>
         </form>
       </Modal>
-      {/* ── Delete Confirmation Modal ─────────────────────────────────────── */}
+
       <Modal show={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Delete Complaint">
-        <p className="text-[14px] text-gray-600 mb-6">
-          Are you sure you want to delete this complaint? It will be moved to the <span className="font-semibold text-gray-800">Deleted</span> filter and can still be reviewed.
-        </p>
+        <div className="flex items-start gap-3 mb-5">
+          <div className="flex-shrink-0 w-9 h-9 rounded-full bg-red-50 flex items-center justify-center">
+            <AlertTriangle size={18} strokeWidth={2} className="text-red-500" />
+          </div>
+          <p className="text-[14px] text-gray-600 pt-1.5">
+            Are you sure you want to delete this complaint? It will be moved to the <span className="font-semibold text-gray-800">Deleted</span> filter and can still be reviewed.
+          </p>
+        </div>
         <div className="flex gap-3 pt-2 border-t border-gray-100">
-          <Button variant="danger" onClick={confirmDelete}>Yes, Delete</Button>
+          <Button variant="danger" onClick={confirmDelete} className="flex items-center gap-1.5">
+            <Trash2 size={14} /> Delete
+          </Button>
           <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Cancel</Button>
         </div>
       </Modal>

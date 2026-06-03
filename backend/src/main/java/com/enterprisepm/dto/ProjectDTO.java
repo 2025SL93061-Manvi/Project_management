@@ -25,6 +25,7 @@ public class ProjectDTO {
 
     private List<Long> memberIds;
     private List<String> memberNames;
+    private List<String> memberRoles;
 
     private int totalTasks;
     private int completedTasks;

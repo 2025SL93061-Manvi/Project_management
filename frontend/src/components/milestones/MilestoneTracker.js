@@ -11,6 +11,7 @@ import { Card } from '../ui/card';
 import { FormGroup } from '../ui/form-group';
 import { Modal } from '../ui/modal';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui/table';
+import { Flag, Plus, Pencil, Trash2, Check, RotateCcw } from 'lucide-react';
 
 export default function MilestoneTracker() {
   const { id: projectId } = useParams();
@@ -83,13 +84,21 @@ export default function MilestoneTracker() {
   );
 
   return (
-    <div>
+    <div className="animate-fade-up">
       <div className="flex justify-between items-center mb-5">
         <div>
-          <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight">🏁 Milestones</h1>
+          <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight flex items-center gap-2">
+            <Flag size={22} strokeWidth={2.2} className="text-[#3f51b5]" />
+            Milestones
+          </h1>
           <p className="text-[13px] text-gray-500 mt-0.5">{filteredMilestones.length} of {milestones.length} milestone{milestones.length !== 1 ? 's' : ''}</p>
         </div>
-        {canManage && <Button variant="primary" onClick={openCreate}>+ Add Milestone</Button>}
+        {canManage && (
+          <Button variant="primary" onClick={openCreate} className="flex items-center gap-1.5">
+            <Plus size={15} strokeWidth={2.5} />
+            Add Milestone
+          </Button>
+        )}
       </div>
       <div className="flex gap-1 mb-5 bg-gray-100 rounded-lg p-1 w-fit">
         {[['ALL', 'All'], ['PENDING', 'Pending'], ['COMPLETED', 'Completed']].map(([val, label]) => (
@@ -144,17 +153,33 @@ export default function MilestoneTracker() {
                 <TableCell>
                   <div className="flex gap-1.5 items-center">
                     {canManage && (
-                      <Button variant="ghost" size="sm" onClick={() => openEdit(m)}>Edit</Button>
+                      <button
+                        onClick={() => openEdit(m)}
+                        className="p-1.5 rounded-md text-gray-400 hover:text-[#3f51b5] hover:bg-[#e8eaf6] transition-colors"
+                        title="Edit milestone"
+                      >
+                        <Pencil size={15} strokeWidth={2} />
+                      </button>
                     )}
-                    <Button
-                      variant={m.completed ? 'warning' : 'success'}
-                      size="sm"
+                    <button
                       onClick={() => toggleComplete(m)}
+                      className={`p-1.5 rounded-md transition-colors ${
+                        m.completed
+                          ? 'text-amber-500 hover:bg-amber-50'
+                          : 'text-emerald-500 hover:bg-emerald-50'
+                      }`}
+                      title={m.completed ? 'Reopen' : 'Mark done'}
                     >
-                      {m.completed ? 'Reopen' : 'Mark Done'}
-                    </Button>
+                      {m.completed ? <RotateCcw size={15} strokeWidth={2} /> : <Check size={15} strokeWidth={2.5} />}
+                    </button>
                     {canManage && (
-                      <Button variant="danger" size="sm" onClick={() => handleDelete(m.id)}>Delete</Button>
+                      <button
+                        onClick={() => handleDelete(m.id)}
+                        className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        title="Delete milestone"
+                      >
+                        <Trash2 size={15} strokeWidth={2} />
+                      </button>
                     )}
                   </div>
                 </TableCell>
@@ -187,7 +212,9 @@ export default function MilestoneTracker() {
             />
           </FormGroup>
           <div className="flex gap-3 pt-2 border-t border-gray-100">
-            <Button type="submit" variant="primary">{editItem ? 'Update Milestone' : 'Create Milestone'}</Button>
+            <Button type="submit" variant="primary" className="flex items-center gap-1.5">
+              {editItem ? <><Pencil size={14} /> Update Milestone</> : <><Plus size={14} strokeWidth={2.5} /> Create Milestone</>}
+            </Button>
             <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
           </div>
         </form>

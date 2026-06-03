@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { fileService } from '../../services/fileService';
 import { useAuth } from '../../context/AuthContext';
-import { Button } from '../ui/button';
 import { Alert } from '../ui/alert';
 import { Card } from '../ui/card';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui/table';
+import { FolderOpen, Upload, Loader2, Eye, Download, Trash2, FileText, FileImage, BookOpen } from 'lucide-react';
 
 export default function FileStorage() {
   const { id: projectId } = useParams();
@@ -86,11 +86,11 @@ export default function FileStorage() {
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
-  const fileIcon = (type) => {
-    if (!type) return '📄';
-    if (type.startsWith('image/')) return '🖼️';
-    if (type === 'application/pdf') return '📕';
-    return '📄';
+  const FileIcon = ({ type }) => {
+    if (!type) return <FileText size={18} className="text-gray-400" />;
+    if (type.startsWith('image/')) return <FileImage size={18} className="text-violet-500" />;
+    if (type === 'application/pdf') return <BookOpen size={18} className="text-red-500" />;
+    return <FileText size={18} className="text-gray-400" />;
   };
 
   if (loading) return (
@@ -100,14 +100,19 @@ export default function FileStorage() {
   );
 
   return (
-    <div>
+    <div className="animate-fade-up">
       <div className="flex justify-between items-center mb-7">
         <div>
-          <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight">📂 File Storage</h1>
+          <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight flex items-center gap-2">
+            <FolderOpen size={22} strokeWidth={2.2} className="text-[#3f51b5]" />
+            File Storage
+          </h1>
           <p className="text-[13px] text-gray-500 mt-0.5">{files.length} file{files.length !== 1 ? 's' : ''} · Max 10 MB per file</p>
         </div>
         <label className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-[13px] font-semibold cursor-pointer transition-all duration-150 shadow-sm ${uploading ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-[#3f51b5] text-white hover:bg-[#3547a8] hover:shadow-md'}`}>
-          {uploading ? '⏳ Uploading…' : '⬆ Upload File'}
+          {uploading
+            ? <><Loader2 size={14} className="animate-spin" /> Uploading…</>
+            : <><Upload size={14} /> Upload File</>}
           <input type="file" className="hidden" onChange={handleUpload} disabled={uploading} />
         </label>
       </div>
@@ -136,7 +141,7 @@ export default function FileStorage() {
               <TableRow key={f.id}>
                 <TableCell>
                   <span className="flex items-center gap-2">
-                    <span className="text-lg">{fileIcon(f.fileType)}</span>
+                    <FileIcon type={f.fileType} />
                     <span className="font-medium text-gray-800">{f.fileName}</span>
                   </span>
                 </TableCell>
@@ -147,11 +152,29 @@ export default function FileStorage() {
                 <TableCell>
                   <div className="flex gap-1.5 items-center">
                     {isViewable(f.fileType) && (
-                      <Button variant="ghost" size="sm" onClick={() => handleView(f)}>View</Button>
+                      <button
+                        onClick={() => handleView(f)}
+                        className="p-1.5 rounded-md text-gray-400 hover:text-[#3f51b5] hover:bg-[#e8eaf6] transition-colors"
+                        title="View file"
+                      >
+                        <Eye size={15} strokeWidth={2} />
+                      </button>
                     )}
-                    <Button variant="success" size="sm" onClick={() => handleDownload(f)}>Download</Button>
+                    <button
+                      onClick={() => handleDownload(f)}
+                      className="p-1.5 rounded-md text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                      title="Download file"
+                    >
+                      <Download size={15} strokeWidth={2} />
+                    </button>
                     {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
-                      <Button variant="danger" size="sm" onClick={() => handleDelete(f.id)}>Delete</Button>
+                      <button
+                        onClick={() => handleDelete(f.id)}
+                        className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        title="Delete file"
+                      >
+                        <Trash2 size={15} strokeWidth={2} />
+                      </button>
                     )}
                   </div>
                 </TableCell>

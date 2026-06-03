@@ -9,6 +9,11 @@ import { Card, CardHeader, CardTitle } from '../ui/card';
 import { Alert } from '../ui/alert';
 import { Select } from '../ui/select';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui/table';
+import {
+  FolderOpen, Activity, Zap, ListTodo, CheckCircle2,
+  Flag, CalendarDays, PartyPopper, Plus, ArrowRight,
+  ExternalLink, RotateCcw, Check
+} from 'lucide-react';
 
 function toTitleCase(str) {
   return str
@@ -19,17 +24,17 @@ function toTitleCase(str) {
 }
 
 const STAT_CONFIG = {
-  blue:   { bg: 'bg-blue-50',   icon: 'text-blue-500',    border: 'border-blue-200',   ring: 'bg-blue-500' },
-  green:  { bg: 'bg-emerald-50',icon: 'text-emerald-500', border: 'border-emerald-200',ring: 'bg-emerald-500' },
-  orange: { bg: 'bg-orange-50', icon: 'text-orange-500',  border: 'border-orange-200', ring: 'bg-orange-500' },
-  red:    { bg: 'bg-red-50',    icon: 'text-red-500',      border: 'border-red-200',    ring: 'bg-red-500' },
+  blue:   { bg: 'bg-blue-50',    icon: 'text-blue-500',    border: 'border-blue-200',   ring: 'bg-blue-500' },
+  green:  { bg: 'bg-emerald-50', icon: 'text-emerald-500', border: 'border-emerald-200',ring: 'bg-emerald-500' },
+  orange: { bg: 'bg-orange-50',  icon: 'text-orange-500',  border: 'border-orange-200', ring: 'bg-orange-500' },
+  red:    { bg: 'bg-red-50',     icon: 'text-red-500',     border: 'border-red-200',    ring: 'bg-red-500' },
 };
 
 function StatCard({ color, value, label, icon }) {
   const cfg = STAT_CONFIG[color] || STAT_CONFIG.blue;
   return (
-    <div className={`bg-white rounded-xl px-5 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_12px_rgba(0,0,0,0.05)] border border-gray-100 flex items-center gap-4`}>
-      <div className={`w-11 h-11 rounded-xl ${cfg.bg} flex items-center justify-center text-xl shrink-0`}>
+    <div className="bg-white rounded-xl px-5 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_12px_rgba(0,0,0,0.05)] border border-gray-100 flex items-center gap-4 transition-all duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.12)] hover:-translate-y-0.5">
+      <div className={`w-11 h-11 rounded-xl ${cfg.bg} ${cfg.icon} flex items-center justify-center shrink-0`}>
         {icon}
       </div>
       <div>
@@ -86,34 +91,40 @@ export default function Dashboard() {
   if (error) return <Alert variant="error">{error}</Alert>;
 
   return (
-    <div>
-      {/* Page header */}
+    <div className="animate-fade-up">
       <div className="flex justify-between items-center mb-7">
         <div>
           <h1 className="text-[26px] font-extrabold text-[#1a237e] tracking-tight">
-            Welcome back, {toTitleCase(user?.name)} 👋
+            Welcome back, {toTitleCase(user?.name)}
           </h1>
           <p className="text-[13px] text-gray-500 mt-0.5">Here's what's happening across your projects today.</p>
         </div>
       </div>
 
-      {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-7">
-        <StatCard color="blue"   value={data.totalProjects}   label="Total Projects"     icon="📁" />
-        <StatCard color="green"  value={data.activeProjects}  label="Active Projects"    icon="🟢" />
-        <StatCard color="orange" value={data.tasksInProgress} label="In Progress"        icon="⚡" />
-        <StatCard color="red"    value={data.tasksTodo}       label="To Do"              icon="📌" />
-        <StatCard color="green"  value={data.tasksDone}       label="Done"               icon="✅" />
+        <StatCard color="blue"   value={data.totalProjects}   label="Total Projects"  icon={<FolderOpen size={20} />} />
+        <StatCard color="green"  value={data.activeProjects}  label="Active Projects" icon={<Activity size={20} />} />
+        <StatCard color="orange" value={data.tasksInProgress} label="In Progress"     icon={<Zap size={20} />} />
+        <StatCard color="red"    value={data.tasksTodo}       label="To Do"           icon={<ListTodo size={20} />} />
+        <StatCard color="green"  value={data.tasksDone}       label="Done"            icon={<CheckCircle2 size={20} />} />
       </div>
 
-      {/* Recent Projects */}
       <Card>
         <CardHeader>
-          <CardTitle>📁 Recent Projects</CardTitle>
+          <CardTitle>
+            <span className="flex items-center gap-1.5">
+              <FolderOpen size={15} className="text-[#3f51b5]" />
+              Recent Projects
+            </span>
+          </CardTitle>
           {data.recentProjects?.length === 0 ? (
-            <Button variant="primary" size="sm" onClick={() => navigate('/projects/new')}>+ New Project</Button>
+            <Button variant="primary" size="sm" onClick={() => navigate('/projects/new')} className="flex items-center gap-1.5">
+              <Plus size={14} strokeWidth={2.5} /> New Project
+            </Button>
           ) : (
-            <Button variant="ghost" size="sm" onClick={() => navigate('/projects')}>View All →</Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/projects')} className="flex items-center gap-1.5">
+              View All <ArrowRight size={13} />
+            </Button>
           )}
         </CardHeader>
         <Table>
@@ -145,7 +156,13 @@ export default function Dashboard() {
                   <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-700 text-xs font-bold">{p.totalTasks}</span>
                 </TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="sm" onClick={() => navigate(`/projects/${p.id}`)}>Open →</Button>
+                  <button
+                    onClick={() => navigate(`/projects/${p.id}`)}
+                    className="p-1.5 rounded-md text-gray-400 hover:text-[#3f51b5] hover:bg-[#e8eaf6] transition-colors"
+                    title="Open project"
+                  >
+                    <ExternalLink size={15} strokeWidth={2} />
+                  </button>
                 </TableCell>
               </TableRow>
             ))}
@@ -153,10 +170,14 @@ export default function Dashboard() {
         </Table>
       </Card>
 
-      {/* My Tasks */}
       <Card>
         <CardHeader>
-          <CardTitle>✅ My Tasks</CardTitle>
+          <CardTitle>
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 size={15} className="text-emerald-500" />
+              My Tasks
+            </span>
+          </CardTitle>
         </CardHeader>
         <Table>
           <TableHead>
@@ -199,11 +220,15 @@ export default function Dashboard() {
         </Table>
       </Card>
 
-      {/* Milestones + Meetings */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
         <Card className="mb-0">
           <CardHeader>
-            <CardTitle>🏁 Upcoming Milestones</CardTitle>
+            <CardTitle>
+              <span className="flex items-center gap-1.5">
+                <Flag size={15} className="text-emerald-500" />
+                Upcoming Milestones
+              </span>
+            </CardTitle>
             <span className="text-xs text-gray-400 font-medium">Next 30 days</span>
           </CardHeader>
           <Table>
@@ -236,8 +261,11 @@ export default function Dashboard() {
                         variant={m.completed ? 'warning' : 'success'}
                         size="sm"
                         onClick={() => handleMilestoneToggle(m)}
+                        className="flex items-center gap-1"
                       >
-                        {m.completed ? 'Reopen' : 'Mark Done'}
+                        {m.completed
+                          ? <><RotateCcw size={12} /> Reopen</>
+                          : <><Check size={12} /> Mark Done</>}
                       </Button>
                     </TableCell>
                   )}
@@ -249,7 +277,12 @@ export default function Dashboard() {
 
         <Card className="mb-0">
           <CardHeader>
-            <CardTitle>📅 Upcoming Meetings</CardTitle>
+            <CardTitle>
+              <span className="flex items-center gap-1.5">
+                <CalendarDays size={15} className="text-amber-500" />
+                Upcoming Meetings
+              </span>
+            </CardTitle>
             <span className="text-xs text-gray-400 font-medium">Next 7 days</span>
           </CardHeader>
           <Table>
@@ -278,10 +311,14 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Holidays */}
       <Card>
         <CardHeader>
-          <CardTitle>🎉 Upcoming Holidays</CardTitle>
+          <CardTitle>
+            <span className="flex items-center gap-1.5">
+              <PartyPopper size={15} className="text-amber-500" />
+              Upcoming Holidays
+            </span>
+          </CardTitle>
           <span className="text-xs text-gray-400 font-medium">Next 30 days</span>
         </CardHeader>
         <Table>

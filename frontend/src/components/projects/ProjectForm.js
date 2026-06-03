@@ -11,6 +11,7 @@ import { Alert } from '../ui/alert';
 import { Card, CardHeader, CardTitle } from '../ui/card';
 import { FormGroup } from '../ui/form-group';
 import { RoleBadge } from '../ui/role-badge';
+import { Plus, Pencil, X, Save } from 'lucide-react';
 
 export default function ProjectForm() {
   const { id } = useParams();
@@ -92,8 +93,10 @@ export default function ProjectForm() {
     <div>
       <div className="flex justify-between items-center mb-7">
         <div>
-          <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight">
-            {isEdit ? 'Edit Project' : 'New Project'}
+          <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight flex items-center gap-2">
+            {isEdit
+              ? <><Pencil size={20} strokeWidth={2.2} className="text-[#3f51b5]" /> Edit Project</>
+              : <><Plus size={22} strokeWidth={2.5} className="text-[#3f51b5]" /> New Project</>}
           </h1>
           <p className="text-[13px] text-gray-500 mt-0.5">{isEdit ? 'Update project details below' : 'Fill in the details to create a new project'}</p>
         </div>
@@ -165,10 +168,12 @@ export default function ProjectForm() {
             </div>
           </FormGroup>
           <div className="flex gap-3 items-center pt-2 border-t border-gray-100">
-            <Button type="submit" variant="primary" disabled={loading}>
+            <Button type="submit" variant="primary" disabled={loading} className="flex items-center gap-1.5">
+              <Save size={14} strokeWidth={2} />
               {loading ? 'Saving…' : (isEdit ? 'Update Project' : 'Create Project')}
             </Button>
-            <Button type="button" variant="secondary" onClick={() => navigate('/projects')}>
+            <Button type="button" variant="secondary" onClick={() => navigate('/projects')} className="flex items-center gap-1.5">
+              <X size={14} strokeWidth={2} />
               Cancel
             </Button>
           </div>
