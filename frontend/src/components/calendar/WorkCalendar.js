@@ -11,7 +11,7 @@ import { FormGroup } from '../ui/form-group';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui/table';
 import {
   CalendarDays, Plus, X, ChevronLeft, ChevronRight,
-  PartyPopper, CalendarCheck, Trash2
+  PartyPopper, CalendarCheck, Trash2, Video
 } from 'lucide-react';
 
 const MONTH_NAMES = [
@@ -339,6 +339,7 @@ export default function WorkCalendar() {
                 <TableHeader>Type</TableHeader>
                 <TableHeader>Date</TableHeader>
                 <TableHeader>Project</TableHeader>
+                <TableHeader>Meet Link</TableHeader>
               </tr>
             </TableHead>
             <TableBody>
@@ -356,6 +357,14 @@ export default function WorkCalendar() {
                   </TableCell>
                   <TableCell className="text-gray-500">{e.date}</TableCell>
                   <TableCell className="text-gray-500">{e.projectName}</TableCell>
+                  <TableCell>
+                    {e.meetingLink
+                      ? <a href={e.meetingLink} target="_blank" rel="noopener noreferrer"
+                           className="inline-flex items-center gap-1 text-[#3f51b5] hover:underline text-[13px] font-medium">
+                          <Video size={13} strokeWidth={2} /> Join Meet
+                        </a>
+                      : <span className="text-gray-400">—</span>}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

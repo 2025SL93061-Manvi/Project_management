@@ -40,7 +40,8 @@ public class CalendarService {
                         m.getMeetingDate().toLocalDate().toString(),
                         "MEETING",
                         m.getProject().getName(),
-                        m.getProject().getId()))
+                        m.getProject().getId(),
+                        m.getMeetingLink()))
                 .collect(Collectors.toList());
 
         List<CalendarEventDTO> milestones = milestoneRepository.findAll().stream()
@@ -51,7 +52,8 @@ public class CalendarService {
                         m.getDueDate().toString(),
                         "MILESTONE",
                         m.getProject().getName(),
-                        m.getProject().getId()))
+                        m.getProject().getId(),
+                        null))
                 .collect(Collectors.toList());
 
         return Stream.concat(meetings.stream(), milestones.stream())

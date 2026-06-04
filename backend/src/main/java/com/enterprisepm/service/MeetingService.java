@@ -23,6 +23,7 @@ public class MeetingService {
     private final EmailService emailService;
     private final ActivityLogService activityLogService;
     private final NotificationService notificationService;
+    private final GoogleCalendarService googleCalendarService;
 
     public List<MeetingDTO> getByProject(Long projectId) {
         return meetingRepository.findByProjectId(projectId)
@@ -41,6 +42,13 @@ public class MeetingService {
         meeting.setLocation(dto.getLocation());
         meeting.setProject(project);
         meeting.setOrganizer(organizer);
+
+        if (dto.isAddGoogleMeet()) {
+            String meetLink = googleCalendarService.createMeetLink(
+                    dto.getTitle(), dto.getDescription(), dto.getMeetingDate());
+            meeting.setMeetingLink(meetLink);
+        }
+
         Meeting saved = meetingRepository.save(meeting);
 
         activityLogService.log(organizer.getId(), "CREATED", "MEETING", saved.getId(),
@@ -110,6 +118,7 @@ public class MeetingService {
         dto.setDescription(m.getDescription());
         dto.setMeetingDate(m.getMeetingDate());
         dto.setLocation(m.getLocation());
+        dto.setMeetingLink(m.getMeetingLink());
         dto.setProjectId(m.getProject().getId());
         dto.setCreatedAt(m.getCreatedAt());
         if (m.getOrganizer() != null) {

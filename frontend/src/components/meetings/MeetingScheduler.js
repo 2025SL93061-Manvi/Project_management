@@ -11,7 +11,7 @@ import { Card } from '../ui/card';
 import { FormGroup } from '../ui/form-group';
 import { Modal } from '../ui/modal';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui/table';
-import { CalendarDays, Plus, Pencil, Trash2 } from 'lucide-react';
+import { CalendarDays, Plus, Pencil, Trash2, Video } from 'lucide-react';
 import { DateTimePicker } from '../ui/DateTimePicker';
 
 export default function MeetingScheduler() {
@@ -22,7 +22,7 @@ export default function MeetingScheduler() {
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem]   = useState(null);
   const [form, setForm] = useState({
-    title:'', description:'', meetingDate:'', location:'', projectId
+    title:'', description:'', meetingDate:'', location:'', projectId, addGoogleMeet: false
   });
   const [error, setError] = useState('');
 
@@ -36,7 +36,7 @@ export default function MeetingScheduler() {
 
   const openCreate = () => {
     setEditItem(null);
-    setForm({ title:'', description:'', meetingDate:'', location:'', projectId });
+    setForm({ title:'', description:'', meetingDate:'', location:'', projectId, addGoogleMeet: false });
     setShowModal(true);
   };
 
@@ -45,12 +45,15 @@ export default function MeetingScheduler() {
     setForm({
       title: m.title, description: m.description || '',
       meetingDate: m.meetingDate ? m.meetingDate.slice(0,16) : '',
-      location: m.location || '', projectId
+      location: m.location || '', projectId, addGoogleMeet: false
     });
     setShowModal(true);
   };
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setForm({ ...form, [name]: type === 'checkbox' ? checked : value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -106,6 +109,7 @@ export default function MeetingScheduler() {
               <TableHeader>Description</TableHeader>
               <TableHeader>Date &amp; Time</TableHeader>
               <TableHeader>Location</TableHeader>
+              <TableHeader>Meet Link</TableHeader>
               <TableHeader>Organizer</TableHeader>
               <TableHeader>Actions</TableHeader>
             </tr>
@@ -113,7 +117,7 @@ export default function MeetingScheduler() {
           <TableBody>
             {meetings.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-12 text-gray-400">No meetings scheduled yet</TableCell>
+                <TableCell colSpan={7} className="text-center py-12 text-gray-400">No meetings scheduled yet</TableCell>
               </TableRow>
             )}
             {meetings.map(m => (
@@ -122,6 +126,14 @@ export default function MeetingScheduler() {
                 <TableCell className="text-gray-500 max-w-[160px] truncate">{m.description || '—'}</TableCell>
                 <TableCell className="text-gray-600">{m.meetingDate ? (() => { const d = new Date(m.meetingDate); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}  ${String(d.getHours()%12||12).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} ${d.getHours()<12?'AM':'PM'}`; })() : '—'}</TableCell>
                 <TableCell className="text-gray-500">{m.location || '—'}</TableCell>
+                <TableCell>
+                  {m.meetingLink
+                    ? <a href={m.meetingLink} target="_blank" rel="noopener noreferrer"
+                         className="inline-flex items-center gap-1 text-[#3f51b5] hover:underline text-[13px] font-medium">
+                        <Video size={13} strokeWidth={2} /> Join Meet
+                      </a>
+                    : <span className="text-gray-400">—</span>}
+                </TableCell>
                 <TableCell className="text-gray-600">{m.organizerName || '—'}</TableCell>
                 <TableCell>
                   <div className="flex gap-1.5 items-center">
@@ -172,6 +184,23 @@ export default function MeetingScheduler() {
               <Input name="location" value={form.location} onChange={handleChange} placeholder="e.g. Zoom, Room A" />
             </FormGroup>
           </div>
+          {!editItem && (
+            <FormGroup>
+              <label className="flex items-center gap-2 cursor-pointer select-none w-fit">
+                <input
+                  type="checkbox"
+                  name="addGoogleMeet"
+                  checked={form.addGoogleMeet}
+                  onChange={handleChange}
+                  className="w-4 h-4 accent-[#3f51b5] rounded"
+                />
+                <span className="flex items-center gap-1.5 text-[13px] font-medium text-gray-700">
+                  <Video size={14} className="text-[#3f51b5]" />
+                  Add Google Meet link
+                </span>
+              </label>
+            </FormGroup>
+          )}
           <div className="flex gap-3 pt-2 border-t border-gray-100">
             <Button type="submit" variant="primary" className="flex items-center gap-1.5">
               {editItem ? <><Pencil size={14} /> Update Meeting</> : <><Plus size={14} strokeWidth={2.5} /> Schedule Meeting</>}

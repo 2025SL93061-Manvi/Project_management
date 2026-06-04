@@ -20,8 +20,6 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query("SELECT DISTINCT t FROM Task t WHERE t.assignedTo = :user OR :user MEMBER OF t.assignees")
     List<Task> findByAssignedToOrAssigneesContaining(@Param("user") User user);
 
-    List<Task> findByAssigneesContaining(User user);
-
     // Used by ReminderSchedulerService — tasks due on a specific date that are not yet done
     @Query("SELECT t FROM Task t WHERE t.endDate = :date AND t.status <> :doneStatus")
     List<Task> findByEndDateAndStatusNot(@Param("date") LocalDate date,

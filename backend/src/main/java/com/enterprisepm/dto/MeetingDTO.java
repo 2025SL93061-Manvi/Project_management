@@ -21,6 +21,10 @@ public class MeetingDTO {
 
     private String location;
 
+    private String meetingLink;
+
+    private boolean addGoogleMeet;
+
     @NotNull
     private Long projectId;
 
