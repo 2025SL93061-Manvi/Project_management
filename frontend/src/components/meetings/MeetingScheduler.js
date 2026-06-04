@@ -25,6 +25,7 @@ export default function MeetingScheduler() {
     title:'', description:'', meetingDate:'', location:'', projectId, addGoogleMeet: false
   });
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const canManage = user?.role === 'ADMIN' || user?.role === 'MANAGER';
 
@@ -57,7 +58,9 @@ export default function MeetingScheduler() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
     setError('');
+    setSubmitting(true);
     const payload = { ...form, projectId: Number(projectId) };
     try {
       if (editItem) {
@@ -69,6 +72,7 @@ export default function MeetingScheduler() {
       }
       setShowModal(false);
     } catch { setError('Failed to save meeting'); }
+    finally { setSubmitting(false); }
   };
 
   const handleDelete = async (id) => {
@@ -202,8 +206,8 @@ export default function MeetingScheduler() {
             </FormGroup>
           )}
           <div className="flex gap-3 pt-2 border-t border-gray-100">
-            <Button type="submit" variant="primary" className="flex items-center gap-1.5">
-              {editItem ? <><Pencil size={14} /> Update Meeting</> : <><Plus size={14} strokeWidth={2.5} /> Schedule Meeting</>}
+            <Button type="submit" variant="primary" disabled={submitting} className="flex items-center gap-1.5">
+              {submitting ? 'Saving…' : editItem ? <><Pencil size={14} /> Update Meeting</> : <><Plus size={14} strokeWidth={2.5} /> Schedule Meeting</>}
             </Button>
             <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
           </div>
