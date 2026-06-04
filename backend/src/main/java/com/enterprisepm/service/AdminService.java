@@ -33,6 +33,12 @@ public class AdminService {
                 .stream().map(this::toDTO).collect(Collectors.toList());
     }
 
+    public List<ComplaintDTO> getComplaintsByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return getComplaintsByUser(user.getId());
+    }
+
     public ComplaintDTO create(ComplaintDTO dto, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));

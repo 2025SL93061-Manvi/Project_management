@@ -99,6 +99,7 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
+
   if (loading) return (
     <div className="flex items-center justify-center py-20">
       <div className="text-gray-400 text-[15px] animate-pulse">Loading dashboard…</div>

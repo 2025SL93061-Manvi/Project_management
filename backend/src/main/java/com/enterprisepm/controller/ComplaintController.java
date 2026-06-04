@@ -21,12 +21,7 @@ public class ComplaintController {
     @GetMapping("/my")
     public ResponseEntity<List<ComplaintDTO>> getMyComplaints(
             @AuthenticationPrincipal UserDetails userDetails) {
-        Long userId = adminService.getAllUsers().stream()
-                .filter(u -> u.getEmail().equals(userDetails.getUsername()))
-                .findFirst()
-                .map(u -> u.getId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        return ResponseEntity.ok(adminService.getComplaintsByUser(userId));
+        return ResponseEntity.ok(adminService.getComplaintsByEmail(userDetails.getUsername()));
     }
 
     @PostMapping

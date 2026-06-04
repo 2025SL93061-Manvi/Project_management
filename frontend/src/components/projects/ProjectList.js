@@ -40,7 +40,7 @@ export default function ProjectList() {
     }
   };
 
-  const filtered = statusFilter === 'All'
+  const filteredProjects = statusFilter === 'All'
     ? projects
     : projects.filter(p => p.status === statusFilter);
 
@@ -59,7 +59,7 @@ export default function ProjectList() {
             <FolderOpen size={22} strokeWidth={2.2} className="text-[#3f51b5]" />
             Projects
           </h1>
-          <p className="text-[13px] text-gray-500 mt-0.5">{filtered.length} project{filtered.length !== 1 ? 's' : ''}</p>
+          <p className="text-[13px] text-gray-500 mt-0.5">{filteredProjects.length} project{filteredProjects.length !== 1 ? 's' : ''}</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
@@ -101,12 +101,12 @@ export default function ProjectList() {
             </tr>
           </TableHead>
           <TableBody>
-            {filtered.length === 0 && (
+            {filteredProjects.length === 0 && (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-12 text-gray-400">No projects found</TableCell>
               </TableRow>
             )}
-            {filtered.map(p => (
+            {filteredProjects.map(p => (
               <TableRow key={p.id}>
                 <TableCell><span className="font-semibold text-gray-900">{p.name}</span></TableCell>
                 <TableCell className="max-w-[180px] overflow-hidden text-ellipsis whitespace-nowrap text-gray-500">

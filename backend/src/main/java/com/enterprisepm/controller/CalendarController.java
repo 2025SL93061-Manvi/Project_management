@@ -21,7 +21,7 @@ public class CalendarController {
     public ResponseEntity<List<Holiday>> getAllHolidays() {
         return ResponseEntity.ok(calendarService.getAllHolidays());
     }
-
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/holidays")
     public ResponseEntity<Holiday> addHoliday(@RequestBody Holiday holiday) {
         return ResponseEntity.ok(calendarService.addHoliday(holiday));

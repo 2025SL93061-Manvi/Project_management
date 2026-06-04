@@ -8,27 +8,35 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setLoading(false);
-      return;
+    // On mount, verify the HttpOnly cookie is valid by calling /me
+    // Store only non-sensitive user info in state (no token)
+    const saved = localStorage.getItem('user');
+    if (saved) {
+      setUser(JSON.parse(saved));
     }
     api.get('/auth/me')
-      .then(res => setUser(res.data))
+      .then(res => {
+        const info = { name: res.data.name, email: res.data.email, role: res.data.role };
+        localStorage.setItem('user', JSON.stringify(info));
+        setUser(info);
+      })
       .catch(() => {
-        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         setUser(null);
       })
       .finally(() => setLoading(false));
   }, []);
 
   const login = (userData) => {
-    localStorage.setItem('token', userData.token);
-    setUser(userData);
+    // userData from login response has no token — just name/email/role
+    const info = { name: userData.name, email: userData.email, role: userData.role };
+    localStorage.setItem('user', JSON.stringify(info));
+    setUser(info);
   };
 
   const logout = async () => {
-    localStorage.removeItem('token');
+    await api.post('/auth/logout').catch(() => {});
+    localStorage.removeItem('user');
     setUser(null);
   };
 
