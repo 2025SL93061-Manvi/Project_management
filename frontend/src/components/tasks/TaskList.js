@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { taskService } from '../../services/taskService';
 import { projectService } from '../../services/projectService';
 import { useAuth } from '../../context/AuthContext';
@@ -16,12 +16,13 @@ import { FormGroup } from '../ui/form-group';
 import { Modal } from '../ui/modal';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui/table';
 import KanbanBoard from './KanbanBoard';
-import { ClipboardList, Plus, Pencil, Trash2, AlertTriangle, LayoutGrid, List } from 'lucide-react';
+import { ClipboardList, Plus, Pencil, Trash2, AlertTriangle, LayoutGrid, List, ArrowLeft } from 'lucide-react';
 import { DatePicker } from '../ui/DatePicker';
 
 export default function TaskList() {
   const { id: projectId } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [tasks, setTasks]         = useState([]);
   const [users, setUsers]         = useState([]);
   const [loading, setLoading]     = useState(true);
@@ -175,6 +176,12 @@ export default function TaskList() {
     <div className="animate-fade-up">
       <div className="flex justify-between items-center mb-5">
         <div>
+          <button
+            onClick={() => navigate(`/projects/${projectId}`)}
+            className="flex items-center gap-1 text-[13px] text-gray-400 hover:text-[#3f51b5] mb-1.5 transition-colors"
+          >
+            <ArrowLeft size={13} strokeWidth={2} /> Back to Project
+          </button>
           <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight flex items-center gap-2">
             <ClipboardList size={22} strokeWidth={2.2} className="text-[#3f51b5]" />
             Tasks

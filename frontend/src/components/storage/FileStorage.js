@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { fileService } from '../../services/fileService';
 import { useAuth } from '../../context/AuthContext';
 import { Alert } from '../ui/alert';
 import { Card } from '../ui/card';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui/table';
-import { FolderOpen, Upload, Loader2, Eye, Download, Trash2, FileText, FileImage, BookOpen } from 'lucide-react';
+import { FolderOpen, Upload, Loader2, Eye, Download, Trash2, FileText, FileImage, BookOpen, ArrowLeft } from 'lucide-react';
 
 export default function FileStorage() {
   const { id: projectId } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [files, setFiles]         = useState([]);
   const [loading, setLoading]     = useState(true);
@@ -103,6 +104,12 @@ export default function FileStorage() {
     <div className="animate-fade-up">
       <div className="flex justify-between items-center mb-7">
         <div>
+          <button
+            onClick={() => navigate(`/projects/${projectId}`)}
+            className="flex items-center gap-1 text-[13px] text-gray-400 hover:text-[#3f51b5] mb-1.5 transition-colors"
+          >
+            <ArrowLeft size={13} strokeWidth={2} /> Back to Project
+          </button>
           <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight flex items-center gap-2">
             <FolderOpen size={22} strokeWidth={2.2} className="text-[#3f51b5]" />
             File Storage

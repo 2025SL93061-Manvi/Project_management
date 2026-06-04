@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { milestoneService } from '../../services/taskService';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/button';
@@ -11,10 +11,11 @@ import { Card } from '../ui/card';
 import { FormGroup } from '../ui/form-group';
 import { Modal } from '../ui/modal';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui/table';
-import { Flag, Plus, Pencil, Trash2, Check, RotateCcw } from 'lucide-react';
+import { Flag, Plus, Pencil, Trash2, Check, RotateCcw, ArrowLeft } from 'lucide-react';
 
 export default function MilestoneTracker() {
   const { id: projectId } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [milestones, setMilestones] = useState([]);
   const [loading, setLoading]       = useState(true);
@@ -87,6 +88,12 @@ export default function MilestoneTracker() {
     <div className="animate-fade-up">
       <div className="flex justify-between items-center mb-5">
         <div>
+          <button
+            onClick={() => navigate(`/projects/${projectId}`)}
+            className="flex items-center gap-1 text-[13px] text-gray-400 hover:text-[#3f51b5] mb-1.5 transition-colors"
+          >
+            <ArrowLeft size={13} strokeWidth={2} /> Back to Project
+          </button>
           <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight flex items-center gap-2">
             <Flag size={22} strokeWidth={2.2} className="text-[#3f51b5]" />
             Milestones

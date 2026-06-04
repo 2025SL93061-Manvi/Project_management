@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { activityService } from '../../services/activityService';
 import { Card, CardHeader, CardTitle } from '../ui/card';
-import { Clock } from 'lucide-react';
+import { Clock, ArrowLeft } from 'lucide-react';
 
 const ACTION_COLOR = {
   CREATED:        { bg: 'bg-emerald-100', text: 'text-emerald-700' },
@@ -22,6 +22,7 @@ function timeAgo(dateStr) {
 
 export default function ActivityLogPage() {
   const { id: projectId } = useParams();
+  const navigate = useNavigate();
   const [logs, setLogs]       = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,6 +35,12 @@ export default function ActivityLogPage() {
   return (
     <div className="animate-fade-up">
       <div className="mb-5">
+        <button
+          onClick={() => navigate(`/projects/${projectId}`)}
+          className="flex items-center gap-1 text-[13px] text-gray-400 hover:text-[#3f51b5] mb-1.5 transition-colors"
+        >
+          <ArrowLeft size={13} strokeWidth={2} /> Back to Project
+        </button>
         <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight flex items-center gap-2">
           <Clock size={22} strokeWidth={2.2} className="text-[#3f51b5]" />
           Activity Log

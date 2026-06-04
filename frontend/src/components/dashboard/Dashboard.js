@@ -362,7 +362,7 @@ export default function Dashboard() {
               </span>
             </CardTitle>
           </CardHeader>
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-gray-50 max-h-[320px] overflow-y-auto">
             {data.recentActivity.map(a => (
               <div key={a.id} className="flex items-start gap-3 px-4 py-3">
                 <div className="w-7 h-7 rounded-full bg-[#e8eaf6] flex items-center justify-center shrink-0 text-[11px] font-bold text-[#3f51b5]">

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,9 +36,14 @@ public class ActivityLogService {
     }
 
     public List<ActivityLogDTO> getRecentForProjects(List<Long> projectIds) {
-        return activityLogRepository
-                .findTop20ByProjectIdInOrderByCreatedAtDesc(projectIds)
-                .stream().map(this::toDTO).collect(Collectors.toList());
+        LocalDateTime since = LocalDateTime.now().minusHours(6);
+        List<ActivityLog> results = activityLogRepository
+                .findTop20ByProjectIdInAndCreatedAtAfterOrderByCreatedAtDesc(projectIds, since);
+        if (results.isEmpty()) {
+            results = activityLogRepository
+                    .findTop20ByProjectIdInOrderByCreatedAtDesc(projectIds);
+        }
+        return results.stream().map(this::toDTO).collect(Collectors.toList());
     }
 
     public List<ActivityLogDTO> getByProject(Long projectId) {

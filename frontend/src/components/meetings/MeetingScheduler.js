@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { meetingService } from '../../services/taskService';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/button';
@@ -11,12 +11,13 @@ import { Card } from '../ui/card';
 import { FormGroup } from '../ui/form-group';
 import { Modal } from '../ui/modal';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui/table';
-import { CalendarDays, Plus, Pencil, Trash2, Video } from 'lucide-react';
+import { CalendarDays, Plus, Pencil, Trash2, Video, ArrowLeft } from 'lucide-react';
 import { DateTimePicker } from '../ui/DateTimePicker';
 
 export default function MeetingScheduler() {
   const { id: projectId } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [meetings, setMeetings]   = useState([]);
   const [loading, setLoading]     = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -91,6 +92,12 @@ export default function MeetingScheduler() {
     <div className="animate-fade-up">
       <div className="flex justify-between items-center mb-7">
         <div>
+          <button
+            onClick={() => navigate(`/projects/${projectId}`)}
+            className="flex items-center gap-1 text-[13px] text-gray-400 hover:text-[#3f51b5] mb-1.5 transition-colors"
+          >
+            <ArrowLeft size={13} strokeWidth={2} /> Back to Project
+          </button>
           <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight flex items-center gap-2">
             <CalendarDays size={22} strokeWidth={2.2} className="text-[#3f51b5]" />
             Meetings

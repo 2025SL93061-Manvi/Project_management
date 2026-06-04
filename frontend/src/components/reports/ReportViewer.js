@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { reportService } from '../../services/fileService';
 import { projectService } from '../../services/projectService';
 import { taskService, milestoneService } from '../../services/taskService';
 import { Button } from '../ui/button';
 import { Alert } from '../ui/alert';
 import { Card, CardHeader, CardTitle } from '../ui/card';
-import { BarChart2, Download, Mail, Printer, Loader2 } from 'lucide-react';
+import { BarChart2, Download, Mail, Printer, Loader2, ArrowLeft } from 'lucide-react';
 
 export default function ReportViewer() {
   const { id: projectId } = useParams();
+  const navigate = useNavigate();
   const [loading, setLoading]   = useState(false);
   const [emailing, setEmailing] = useState(false);
   const [error, setError]       = useState('');
@@ -161,6 +162,12 @@ export default function ReportViewer() {
     <div className="animate-fade-up">
       <div className="flex justify-between items-center mb-7">
         <div>
+          <button
+            onClick={() => navigate(`/projects/${projectId}`)}
+            className="flex items-center gap-1 text-[13px] text-gray-400 hover:text-[#3f51b5] mb-1.5 transition-colors"
+          >
+            <ArrowLeft size={13} strokeWidth={2} /> Back to Project
+          </button>
           <h1 className="text-[24px] font-extrabold text-[#1a237e] tracking-tight flex items-center gap-2">
             <BarChart2 size={22} strokeWidth={2.2} className="text-[#3f51b5]" />
             Project Report
