@@ -3,10 +3,8 @@ package com.enterprisepm.service;
 import com.enterprisepm.dto.MilestoneDTO;
 import com.enterprisepm.model.Milestone;
 import com.enterprisepm.model.Project;
-import com.enterprisepm.model.User;
 import com.enterprisepm.repository.MilestoneRepository;
 import com.enterprisepm.repository.ProjectRepository;
-import com.enterprisepm.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +20,6 @@ public class MilestoneService {
     private final EmailService emailService;
     private final ActivityLogService activityLogService;
     private final NotificationService notificationService;
-    private final UserRepository userRepository;
 
     public List<MilestoneDTO> getByProject(Long projectId) {
         return milestoneRepository.findByProjectId(projectId)

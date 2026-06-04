@@ -114,7 +114,6 @@ export default function WorkCalendar() {
             <CalendarDays size={22} strokeWidth={2.2} className="text-[#3f51b5]" />
             Work Calendar
           </h1>
-          <p className="text-[13px] text-gray-500 mt-0.5">{holidays.length} holiday{holidays.length !== 1 ? 's' : ''} configured</p>
         </div>
         {isAdmin && (
           <Button variant={showForm ? 'secondary' : 'primary'} onClick={() => setShowForm(!showForm)} className="flex items-center gap-1.5">
