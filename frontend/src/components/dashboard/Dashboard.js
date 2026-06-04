@@ -12,8 +12,14 @@ import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '.
 import {
   FolderOpen, Activity, Zap, ListTodo, CheckCircle2,
   Flag, CalendarDays, PartyPopper, Plus, ArrowRight,
-  ExternalLink, RotateCcw, Check
+  ExternalLink, RotateCcw, Check, Clock
 } from 'lucide-react';
+
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  const [y, m, d] = dateStr.split('-');
+  return `${d}/${m}/${y.slice(2)}`;
+}
 
 function toTitleCase(str) {
   return str
@@ -147,11 +153,11 @@ export default function Dashboard() {
             )}
             {data.recentProjects?.map(p => (
               <TableRow key={p.id}>
-                <TableCell><span className="font-semibold text-blue-700 hover:underline cursor-pointer" onClick={() => navigate(`/projects/${p.id}`)}>{p.name}</span></TableCell>
+                <TableCell><span className="font-semibold text-blue-700 cursor-pointer" onClick={() => navigate(`/projects/${p.id}`)}>{p.name}</span></TableCell>
                 <TableCell><Badge value={p.status}>{p.status}</Badge></TableCell>
                 <TableCell className="text-gray-600">{p.ownerName}</TableCell>
-                <TableCell className="text-gray-500">{p.startDate || '—'}</TableCell>
-                <TableCell className="text-gray-500">{p.endDate || '—'}</TableCell>
+                <TableCell className="text-gray-500">{formatDate(p.startDate)}</TableCell>
+                <TableCell className="text-gray-500">{formatDate(p.endDate)}</TableCell>
                 <TableCell>
                   <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-700 text-xs font-bold">{p.totalTasks}</span>
                 </TableCell>
@@ -197,10 +203,10 @@ export default function Dashboard() {
             )}
             {data.myTasks?.map(t => (
               <TableRow key={t.id}>
-                <TableCell className="font-medium text-blue-700 hover:underline cursor-pointer" onClick={() => navigate(`/projects/${t.projectId}/tasks`)}>{t.title}</TableCell>
+                <TableCell className="font-medium text-blue-700 cursor-pointer" onClick={() => navigate(`/projects/${t.projectId}/tasks`)}>{t.title}</TableCell>
                 <TableCell><Badge value={t.status}>{t.status}</Badge></TableCell>
                 <TableCell><Badge value={t.priority}>{t.priority}</Badge></TableCell>
-                <TableCell className="text-gray-500">{t.endDate || '—'}</TableCell>
+                <TableCell className="text-gray-500">{formatDate(t.endDate)}</TableCell>
                 {isAdmin && (
                   <TableCell>
                     <Select
@@ -248,8 +254,8 @@ export default function Dashboard() {
               )}
               {data.upcomingMilestones?.map(m => (
                 <TableRow key={m.id}>
-                  <TableCell className="font-medium text-blue-700 hover:underline cursor-pointer" onClick={() => navigate(`/projects/${m.projectId}/milestones`)}>{m.title}</TableCell>
-                  <TableCell className="text-gray-500">{m.dueDate || '—'}</TableCell>
+                  <TableCell className="font-medium text-blue-700 cursor-pointer" onClick={() => navigate(`/projects/${m.projectId}/milestones`)}>{m.title}</TableCell>
+                  <TableCell className="text-gray-500">{formatDate(m.dueDate)}</TableCell>
                   <TableCell>
                     <Badge value={m.completed ? 'done' : 'todo'}>
                       {m.completed ? 'Completed' : 'Pending'}
@@ -301,7 +307,7 @@ export default function Dashboard() {
               )}
               {data.upcomingMeetings?.map(m => (
                 <TableRow key={m.id}>
-                  <TableCell className="font-medium text-blue-700 hover:underline cursor-pointer" onClick={() => navigate(`/projects/${m.projectId}/meetings`)}>{m.title}</TableCell>
+                  <TableCell className="font-medium text-blue-700 cursor-pointer" onClick={() => navigate(`/projects/${m.projectId}/meetings`)}>{m.title}</TableCell>
                   <TableCell className="text-gray-500">{m.meetingDate ? new Date(m.meetingDate).toLocaleString() : '—'}</TableCell>
                   <TableCell className="text-gray-500">{m.location || '—'}</TableCell>
                 </TableRow>
@@ -337,14 +343,50 @@ export default function Dashboard() {
             )}
             {data.upcomingHolidays?.map(h => (
               <TableRow key={h.id}>
-                <TableCell className="font-medium text-blue-700 hover:underline cursor-pointer" onClick={() => navigate('/calendar')}>{h.name}</TableCell>
-                <TableCell className="text-gray-500">{h.holidayDate}</TableCell>
+                <TableCell className="font-medium text-blue-700 cursor-pointer" onClick={() => navigate('/calendar')}>{h.name}</TableCell>
+                <TableCell className="text-gray-500">{formatDate(h.holidayDate)}</TableCell>
                 <TableCell className="text-gray-500">{new Date(h.holidayDate + 'T00:00:00').toLocaleDateString('default', { weekday: 'long' })}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </Card>
+
+      {data.recentActivity?.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <span className="flex items-center gap-1.5">
+                <Clock size={15} className="text-[#3f51b5]" />
+                Recent Activity
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <div className="divide-y divide-gray-50">
+            {data.recentActivity.map(a => (
+              <div key={a.id} className="flex items-start gap-3 px-4 py-3">
+                <div className="w-7 h-7 rounded-full bg-[#e8eaf6] flex items-center justify-center shrink-0 text-[11px] font-bold text-[#3f51b5]">
+                  {a.userName?.charAt(0)?.toUpperCase() || '?'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] text-gray-800">
+                    <span className="font-semibold">{a.userName || 'Someone'}</span>
+                    {' '}{a.action?.toLowerCase().replace('_', ' ')}{' '}
+                    <span className="font-medium text-[#3f51b5]">{a.entityName}</span>
+                    {a.projectName && <span className="text-gray-400"> in {a.projectName}</span>}
+                  </p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">
+                    {a.createdAt ? new Date(a.createdAt).toLocaleString() : ''}
+                  </p>
+                </div>
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 shrink-0">
+                  {a.entityType}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

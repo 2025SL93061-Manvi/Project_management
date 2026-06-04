@@ -1,16 +1,17 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { cn } from '../../lib/utils';
 
 function Modal({ show, onClose, title, children, className }) {
   if (!show) return null;
-  return (
+  return ReactDOM.createPortal(
     <div
       className="fixed inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center z-[200] p-4 animate-backdrop-in"
       onClick={onClose}
     >
       <div
         className={cn(
-          'bg-white rounded-2xl p-7 w-full max-w-[540px] max-h-[90vh] overflow-y-auto shadow-[0_8px_40px_rgba(0,0,0,0.18)] border border-gray-100 animate-modal-in',
+          'bg-white rounded-2xl p-7 w-full max-w-[600px] max-h-[90vh] overflow-y-auto shadow-[0_8px_40px_rgba(0,0,0,0.18)] border border-gray-100 animate-modal-in',
           className
         )}
         onClick={e => e.stopPropagation()}
@@ -26,7 +27,8 @@ function Modal({ show, onClose, title, children, className }) {
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

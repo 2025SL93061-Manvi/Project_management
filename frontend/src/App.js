@@ -16,6 +16,7 @@ import ReportViewer from './components/reports/ReportViewer';
 import FileStorage from './components/storage/FileStorage';
 import WorkCalendar from './components/calendar/WorkCalendar';
 import AdminPanel from './components/admin/AdminPanel';
+import ActivityLogPage from './components/activity/ActivityLogPage';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
             <Route path="projects/:id/meetings"   element={<MeetingScheduler />} />
             <Route path="projects/:id/files"      element={<FileStorage />} />
             <Route path="projects/:id/report"     element={<ReportViewer />} />
+            <Route path="projects/:id/activity"   element={<ActivityLogPage />} />
             <Route path="calendar"                element={<WorkCalendar />} />
             <Route path="admin"                   element={<AdminPanel />} />
           </Route>

@@ -23,7 +23,7 @@ function TableBody({ className, ...props }) {
 function TableRow({ className, ...props }) {
   return (
     <tr
-      className={cn('transition-colors hover:bg-indigo-50/40 group', className)}
+      className={cn('transition-colors hover:bg-indigo-50 group', className)}
       {...props}
     />
   );

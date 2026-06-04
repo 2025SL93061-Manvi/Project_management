@@ -25,6 +25,7 @@ public class DashboardService {
     private final HolidayRepository holidayRepository;
     private final ProjectService projectService;
     private final TaskService taskService;
+    private final ActivityLogService activityLogService;
 
     public DashboardDTO getDashboard(String email) {
         User user = userRepository.findByEmail(email)
@@ -113,6 +114,9 @@ public class DashboardService {
                 })
                 .collect(Collectors.toList());
         dashboard.setUpcomingHolidays(upcomingHolidays);
+
+        List<Long> projectIds = myProjects.stream().map(Project::getId).collect(Collectors.toList());
+        dashboard.setRecentActivity(activityLogService.getRecentForProjects(projectIds));
 
         return dashboard;
     }

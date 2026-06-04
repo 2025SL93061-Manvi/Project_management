@@ -1,6 +1,8 @@
 package com.enterprisepm.controller;
 
 import com.enterprisepm.dto.TaskDTO;
+import com.enterprisepm.model.User;
+import com.enterprisepm.repository.UserRepository;
 import com.enterprisepm.service.TaskService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ import java.util.List;
 public class TaskController {
 
     private final TaskService taskService;
+    private final UserRepository userRepository;
 
     @GetMapping("/project/{projectId}")
     public ResponseEntity<List<TaskDTO>> getByProject(@PathVariable Long projectId) {
@@ -32,22 +35,30 @@ public class TaskController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER','DEVELOPER')")
-    public ResponseEntity<TaskDTO> create(@Valid @RequestBody TaskDTO dto) {
-        return ResponseEntity.ok(taskService.create(dto));
+    public ResponseEntity<TaskDTO> create(
+            @Valid @RequestBody TaskDTO dto,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User actor = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
+        return ResponseEntity.ok(taskService.create(dto, actor));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER','DEVELOPER')")
     public ResponseEntity<TaskDTO> update(
             @PathVariable Long id,
-            @Valid @RequestBody TaskDTO dto) {
-        return ResponseEntity.ok(taskService.update(id, dto));
+            @Valid @RequestBody TaskDTO dto,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User actor = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
+        return ResponseEntity.ok(taskService.update(id, dto, actor));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER','DEVELOPER')")
-    public ResponseEntity<String> delete(@PathVariable Long id) {
-        taskService.delete(id);
+    public ResponseEntity<String> delete(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User actor = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
+        taskService.delete(id, actor);
         return ResponseEntity.ok("Task deleted");
     }
 }

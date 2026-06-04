@@ -12,6 +12,7 @@ import { Card, CardHeader, CardTitle } from '../ui/card';
 import { FormGroup } from '../ui/form-group';
 import { RoleBadge } from '../ui/role-badge';
 import { Plus, Pencil, X, Save } from 'lucide-react';
+import { DatePicker } from '../ui/DatePicker';
 
 export default function ProjectForm() {
   const { id } = useParams();
@@ -126,11 +127,11 @@ export default function ProjectForm() {
             </FormGroup>
             <FormGroup>
               <Label htmlFor="startDate">Start Date</Label>
-              <Input id="startDate" type="date" name="startDate" value={form.startDate} onChange={handleChange} max={form.endDate || undefined} />
+              <DatePicker name="startDate" value={form.startDate} onChange={handleChange} />
             </FormGroup>
             <FormGroup>
               <Label htmlFor="endDate">End Date</Label>
-              <Input id="endDate" type="date" name="endDate" value={form.endDate} onChange={handleChange} min={form.startDate || undefined} />
+              <DatePicker name="endDate" value={form.endDate} onChange={handleChange} />
             </FormGroup>
           </div>
           <FormGroup>

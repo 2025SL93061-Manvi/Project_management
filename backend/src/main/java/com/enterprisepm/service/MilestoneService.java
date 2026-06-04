@@ -3,8 +3,10 @@ package com.enterprisepm.service;
 import com.enterprisepm.dto.MilestoneDTO;
 import com.enterprisepm.model.Milestone;
 import com.enterprisepm.model.Project;
+import com.enterprisepm.model.User;
 import com.enterprisepm.repository.MilestoneRepository;
 import com.enterprisepm.repository.ProjectRepository;
+import com.enterprisepm.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,9 @@ public class MilestoneService {
     private final MilestoneRepository milestoneRepository;
     private final ProjectRepository projectRepository;
     private final EmailService emailService;
+    private final ActivityLogService activityLogService;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     public List<MilestoneDTO> getByProject(Long projectId) {
         return milestoneRepository.findByProjectId(projectId)
@@ -32,7 +37,13 @@ public class MilestoneService {
         milestone.setDueDate(dto.getDueDate());
         milestone.setCompleted(dto.isCompleted());
         milestone.setProject(project);
-        return toDTO(milestoneRepository.save(milestone));
+        Milestone saved = milestoneRepository.save(milestone);
+
+        Long ownerId = project.getOwner() != null ? project.getOwner().getId() : null;
+        activityLogService.log(ownerId, "CREATED", "MILESTONE", saved.getId(),
+                saved.getTitle(), project.getId(), project.getName());
+
+        return toDTO(saved);
     }
 
     public MilestoneDTO update(Long id, MilestoneDTO dto) {
@@ -44,9 +55,15 @@ public class MilestoneService {
         milestone.setCompleted(dto.isCompleted());
         Milestone saved = milestoneRepository.save(milestone);
 
-        // Email project owner when milestone is newly marked complete
+        Project project = saved.getProject();
+        Long ownerId = project.getOwner() != null ? project.getOwner().getId() : null;
+
+        String action = (!wasCompleted && saved.isCompleted()) ? "COMPLETED" : "UPDATED";
+        activityLogService.log(ownerId, action, "MILESTONE", saved.getId(),
+                saved.getTitle(), project.getId(), project.getName());
+
         if (!wasCompleted && saved.isCompleted()) {
-            Project project = saved.getProject();
+            // Email project owner
             if (project.getOwner() != null) {
                 emailService.sendMilestoneCompletedEmail(
                         project.getOwner().getEmail(),
@@ -54,12 +71,38 @@ public class MilestoneService {
                         saved.getTitle(),
                         project.getName());
             }
+            // Notify all project members
+            project.getMembers().forEach(member ->
+                notificationService.notifyUser(member.getId(),
+                        "Milestone completed: " + saved.getTitle(),
+                        "Milestone \"" + saved.getTitle() + "\" was marked complete in " + project.getName(),
+                        "MILESTONE_COMPLETED", "MILESTONE", saved.getId(),
+                        "/projects/" + project.getId() + "/milestones")
+            );
+            // Notify owner if not a member
+            if (ownerId != null) {
+                boolean ownerIsMember = project.getMembers().stream()
+                        .anyMatch(m -> m.getId().equals(ownerId));
+                if (!ownerIsMember) {
+                    notificationService.notifyUser(ownerId,
+                            "Milestone completed: " + saved.getTitle(),
+                            "Milestone \"" + saved.getTitle() + "\" was marked complete in " + project.getName(),
+                            "MILESTONE_COMPLETED", "MILESTONE", saved.getId(),
+                            "/projects/" + project.getId() + "/milestones");
+                }
+            }
         }
 
         return toDTO(saved);
     }
 
     public void delete(Long id) {
+        Milestone milestone = milestoneRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Milestone not found"));
+        Long ownerId = milestone.getProject().getOwner() != null
+                ? milestone.getProject().getOwner().getId() : null;
+        activityLogService.log(ownerId, "DELETED", "MILESTONE", milestone.getId(),
+                milestone.getTitle(), milestone.getProject().getId(), milestone.getProject().getName());
         milestoneRepository.deleteById(id);
     }
 

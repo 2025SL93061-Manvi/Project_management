@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/button';
@@ -9,7 +9,8 @@ import { Label } from '../ui/label';
 import { FormGroup } from '../ui/form-group';
 import { Alert } from '../ui/alert';
 import api from '../../services/api';
-import { LayoutDashboard, Pencil, LogOut, Save } from 'lucide-react';
+import { notificationService } from '../../services/notificationService';
+import { LayoutDashboard, Pencil, LogOut, Save, Bell } from 'lucide-react';
 
 export default function Navbar() {
   const { user, login, logout } = useAuth();
@@ -22,8 +23,38 @@ export default function Navbar() {
   const [profileSuccess, setProfileSuccess] = useState('');
   const dropdownRef = useRef(null);
 
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const notifRef = useRef(null);
+
+  const fetchUnreadCount = useCallback(() => {
+    notificationService.getUnreadCount()
+      .then(res => setUnreadCount(res.data.count || 0))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [fetchUnreadCount]);
+
+  const openNotifications = () => {
+    setNotifOpen(true);
+    notificationService.getAll()
+      .then(res => setNotifications(res.data || []))
+      .catch(() => {});
+    if (unreadCount > 0) {
+      notificationService.markAllRead().then(() => setUnreadCount(0)).catch(() => {});
+    }
+  };
+
   useEffect(() => {
     const handleClickOutside = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false);
+      }
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setDropdownOpen(false);
       }
@@ -98,6 +129,54 @@ export default function Navbar() {
 
         {/* User section */}
         <div className="flex items-center gap-3">
+
+          {/* Notification bell */}
+          <div className="relative" ref={notifRef}>
+            <button
+              onClick={openNotifications}
+              className="relative w-9 h-9 flex items-center justify-center rounded-full text-white/80 hover:bg-white/10 hover:text-white transition-all"
+              title="Notifications"
+            >
+              <Bell size={17} strokeWidth={2} />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {notifOpen && (
+              <div className="absolute right-0 top-[calc(100%+8px)] w-80 bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.15)] border border-gray-100 z-[200] overflow-hidden animate-slide-down">
+                <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                  <span className="text-[13px] font-bold text-gray-800">Notifications</span>
+                  <span className="text-[11px] text-gray-400">{notifications.length} total</span>
+                </div>
+                <div className="max-h-80 overflow-y-auto">
+                  {notifications.length === 0 && (
+                    <div className="px-4 py-8 text-center text-[13px] text-gray-400">No notifications yet</div>
+                  )}
+                  {notifications.map(n => (
+                    <div
+                      key={n.id}
+                      className={`px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-default ${!n.read ? 'bg-[#f5f6ff]' : ''}`}
+                      onClick={() => { if (n.linkUrl) { navigate(n.linkUrl); setNotifOpen(false); } }}
+                    >
+                      <div className="flex items-start gap-2.5">
+                        {!n.read && <div className="w-1.5 h-1.5 rounded-full bg-[#3f51b5] shrink-0 mt-1.5" />}
+                        <div className={!n.read ? '' : 'ml-4'}>
+                          <p className="text-[12px] font-semibold text-gray-800">{n.title}</p>
+                          <p className="text-[11px] text-gray-500 mt-0.5">{n.message}</p>
+                          <p className="text-[10px] text-gray-400 mt-1">
+                            {n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
           <div className="relative" ref={dropdownRef}>
             {/* Avatar circle — only initial shown by default */}
             <button

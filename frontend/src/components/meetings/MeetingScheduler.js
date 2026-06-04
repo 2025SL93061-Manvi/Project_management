@@ -12,6 +12,7 @@ import { FormGroup } from '../ui/form-group';
 import { Modal } from '../ui/modal';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui/table';
 import { CalendarDays, Plus, Pencil, Trash2 } from 'lucide-react';
+import { DateTimePicker } from '../ui/DateTimePicker';
 
 export default function MeetingScheduler() {
   const { id: projectId } = useParams();
@@ -119,7 +120,7 @@ export default function MeetingScheduler() {
               <TableRow key={m.id}>
                 <TableCell><span className="font-semibold text-gray-900">{m.title}</span></TableCell>
                 <TableCell className="text-gray-500 max-w-[160px] truncate">{m.description || '—'}</TableCell>
-                <TableCell className="text-gray-600">{m.meetingDate ? new Date(m.meetingDate).toLocaleString() : '—'}</TableCell>
+                <TableCell className="text-gray-600">{m.meetingDate ? (() => { const d = new Date(m.meetingDate); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}  ${String(d.getHours()%12||12).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} ${d.getHours()<12?'AM':'PM'}`; })() : '—'}</TableCell>
                 <TableCell className="text-gray-500">{m.location || '—'}</TableCell>
                 <TableCell className="text-gray-600">{m.organizerName || '—'}</TableCell>
                 <TableCell>
@@ -164,7 +165,7 @@ export default function MeetingScheduler() {
           <div className="grid grid-cols-2 gap-4">
             <FormGroup>
               <Label>Date &amp; Time *</Label>
-              <Input type="datetime-local" name="meetingDate" value={form.meetingDate} onChange={handleChange} required />
+              <DateTimePicker name="meetingDate" value={form.meetingDate} onChange={handleChange} />
             </FormGroup>
             <FormGroup>
               <Label>Location</Label>

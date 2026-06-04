@@ -8,7 +8,7 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Card, CardHeader, CardTitle } from '../ui/card';
 import { Alert } from '../ui/alert';
-import { ClipboardList, Flag, CalendarDays, FolderOpen, BarChart2, User, Pencil } from 'lucide-react';
+import { ClipboardList, Flag, CalendarDays, FolderOpen, BarChart2, User, Pencil, Clock } from 'lucide-react';
 
 const NAV_CARDS = [
   { key: 'tasks',      Icon: ClipboardList, label: 'Tasks',      color: 'blue',   path: 'tasks'      },
@@ -16,6 +16,7 @@ const NAV_CARDS = [
   { key: 'meetings',   Icon: CalendarDays,  label: 'Meetings',   color: 'amber',  path: 'meetings'   },
   { key: 'files',      Icon: FolderOpen,    label: 'Files',      color: 'violet', path: 'files'      },
   { key: 'report',     Icon: BarChart2,     label: 'Reports',    color: 'indigo', path: 'report'     },
+  { key: 'activity',   Icon: Clock,         label: 'Activity',   color: 'slate',  path: 'activity'   },
 ];
 
 const COLOR = {
@@ -24,6 +25,7 @@ const COLOR = {
   amber:  'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100',
   violet: 'bg-violet-50 text-violet-600 border-violet-200 hover:bg-violet-100',
   indigo: 'bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100',
+  slate:  'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100',
 };
 
 export default function ProjectDetail() {
@@ -131,7 +133,7 @@ export default function ProjectDetail() {
         </div>
       </Card>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         {NAV_CARDS.map(({ key, Icon, label, color, path }) => (
           <button
             key={key}

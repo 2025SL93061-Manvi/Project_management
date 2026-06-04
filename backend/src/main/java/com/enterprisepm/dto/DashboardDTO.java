@@ -21,4 +21,5 @@ public class DashboardDTO {
     private List<MilestoneDTO> upcomingMilestones;
     private List<MeetingDTO> upcomingMeetings;
     private List<HolidayDTO> upcomingHolidays;
+    private List<ActivityLogDTO> recentActivity;
 }

@@ -15,7 +15,9 @@ import { Card } from '../ui/card';
 import { FormGroup } from '../ui/form-group';
 import { Modal } from '../ui/modal';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui/table';
-import { ClipboardList, Plus, Pencil, Trash2, AlertTriangle } from 'lucide-react';
+import KanbanBoard from './KanbanBoard';
+import { ClipboardList, Plus, Pencil, Trash2, AlertTriangle, LayoutGrid, List } from 'lucide-react';
+import { DatePicker } from '../ui/DatePicker';
 
 export default function TaskList() {
   const { id: projectId } = useParams();
@@ -32,6 +34,7 @@ export default function TaskList() {
   });
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('ALL');
+  const [view, setView] = useState('table'); // 'table' | 'kanban'
   const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false);
   const assigneeDropdownRef = useRef(null);
 
@@ -85,10 +88,10 @@ export default function TaskList() {
     }).catch(() => {});
   }, [projectId]);
 
-  const openCreate = () => {
+  const openCreate = (defaultStatus = 'TODO') => {
     setEditTask(null);
     setAssigneeDropdownOpen(false);
-    setForm({ title:'', description:'', status:'TODO', priority:'MEDIUM',
+    setForm({ title:'', description:'', status: defaultStatus, priority:'MEDIUM',
       startDate:'', endDate:'', assigneeIds: [], projectId });
     setShowModal(true);
   };
@@ -179,13 +182,50 @@ export default function TaskList() {
           <p className="text-[13px] text-gray-500 mt-0.5">{filteredTasks.length} of {tasks.length} task{tasks.length !== 1 ? 's' : ''}</p>
         </div>
         {canManage && (
-          <Button variant="primary" onClick={openCreate} className="flex items-center gap-1.5">
-            <Plus size={16} strokeWidth={2.5} />
-            Add Task
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* View toggle */}
+            <div className="flex items-center bg-gray-100 rounded-lg p-1 gap-0.5">
+              <button
+                onClick={() => setView('table')}
+                title="Table view"
+                className={`p-1.5 rounded-md transition-colors ${view === 'table' ? 'bg-white text-[#3f51b5] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                <List size={15} strokeWidth={2} />
+              </button>
+              <button
+                onClick={() => setView('kanban')}
+                title="Kanban view"
+                className={`p-1.5 rounded-md transition-colors ${view === 'kanban' ? 'bg-white text-[#3f51b5] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                <LayoutGrid size={15} strokeWidth={2} />
+              </button>
+            </div>
+            <Button variant="primary" onClick={() => openCreate()} className="flex items-center gap-1.5">
+              <Plus size={16} strokeWidth={2.5} />
+              Add Task
+            </Button>
+          </div>
+        )}
+        {!canManage && (
+          <div className="flex items-center bg-gray-100 rounded-lg p-1 gap-0.5">
+            <button
+              onClick={() => setView('table')}
+              title="Table view"
+              className={`p-1.5 rounded-md transition-colors ${view === 'table' ? 'bg-white text-[#3f51b5] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+            >
+              <List size={15} strokeWidth={2} />
+            </button>
+            <button
+              onClick={() => setView('kanban')}
+              title="Kanban view"
+              className={`p-1.5 rounded-md transition-colors ${view === 'kanban' ? 'bg-white text-[#3f51b5] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+            >
+              <LayoutGrid size={15} strokeWidth={2} />
+            </button>
+          </div>
         )}
       </div>
-      <div className="flex gap-1 mb-5 bg-gray-100 rounded-lg p-1 w-fit">
+      <div className="flex gap-1 mb-5 bg-gray-100 rounded-lg p-1 w-fit" style={{ display: view === 'kanban' ? 'none' : undefined }}>
         {[['ALL', 'All'], ['ACTIVE', 'Active'], ['DONE', 'Completed']].map(([val, label]) => (
           <button
             key={val}
@@ -207,6 +247,15 @@ export default function TaskList() {
       </div>
       {error && !showModal && <Alert variant="error">{error}</Alert>}
 
+      {view === 'kanban' ? (
+        <KanbanBoard
+          tasks={tasks}
+          setTasks={setTasks}
+          onEdit={openEdit}
+          onAddTask={(status) => openCreate(status)}
+          canManage={canManage}
+        />
+      ) : (
       <Card>
         <Table>
           <TableHead>
@@ -241,8 +290,8 @@ export default function TaskList() {
                     ? t.assigneeNames.join(', ')
                     : (t.assignedToName || <span className="text-gray-400 italic">Unassigned</span>)}
                 </TableCell>
-                <TableCell className="text-gray-500">{t.startDate || '—'}</TableCell>
-                <TableCell className="text-gray-500">{t.endDate || '—'}</TableCell>
+                <TableCell className="text-gray-500">{t.startDate ? t.startDate.split('-').reverse().join('/') : '—'}</TableCell>
+                <TableCell className="text-gray-500">{t.endDate ? t.endDate.split('-').reverse().join('/') : '—'}</TableCell>
                 <TableCell>
                   <div className="flex gap-1.5 items-center">
                     <button
@@ -268,6 +317,7 @@ export default function TaskList() {
           </TableBody>
         </Table>
       </Card>
+      )}
 
       <Modal show={showModal} onClose={() => setShowModal(false)} title={editTask ? 'Edit Task' : 'New Task'}>
         {error && <Alert variant="error">{error}</Alert>}
@@ -301,11 +351,11 @@ export default function TaskList() {
           <div className="grid grid-cols-2 gap-4">
             <FormGroup>
               <Label>Start Date</Label>
-              <Input type="date" name="startDate" value={form.startDate} onChange={handleChange} max={form.endDate || undefined} />
+              <DatePicker name="startDate" value={form.startDate} onChange={handleChange} />
             </FormGroup>
             <FormGroup>
               <Label>Due Date</Label>
-              <Input type="date" name="endDate" value={form.endDate} onChange={handleChange} min={form.startDate || undefined} />
+              <DatePicker name="endDate" value={form.endDate} onChange={handleChange} />
             </FormGroup>
           </div>
           <FormGroup>
