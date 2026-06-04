@@ -15,7 +15,7 @@ import { Modal } from '../ui/modal';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../ui/table';
 import {
   Settings, Users, MessageSquareWarning, UserRound,
-  Plus, Pencil, Trash2, AlertTriangle, Save, Send
+  Plus, Pencil, Trash2, AlertTriangle, Save, Send, Eye
 } from 'lucide-react';
 
 export default function AdminPanel() {
@@ -49,6 +49,7 @@ export default function AdminPanel() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [error, setError] = useState('');
   const [deleteTarget, setDeleteTarget]   = useState(null);
+  const [viewComplaint, setViewComplaint] = useState(null);
 
   const closeModal = () => { setShowModal(false); setEditComplaint(null); setForm(EMPTY_FORM); setError(''); };
 
@@ -351,13 +352,22 @@ export default function AdminPanel() {
                     </TableCell>
                     <TableCell>
                       {c.status !== 'DELETED' && (
-                        <button
-                          onClick={() => handleDeleteComplaint(c.id)}
-                          className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                          title="Delete complaint"
-                        >
-                          <Trash2 size={15} strokeWidth={2} />
-                        </button>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => setViewComplaint(c)}
+                            className="p-1.5 rounded-md text-gray-400 hover:text-[#3f51b5] hover:bg-[#e8eaf6] transition-colors"
+                            title="View details"
+                          >
+                            <Eye size={15} strokeWidth={2} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteComplaint(c.id)}
+                            className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                            title="Delete complaint"
+                          >
+                            <Trash2 size={15} strokeWidth={2} />
+                          </button>
+                        </div>
                       )}
                     </TableCell>
                   </TableRow>
@@ -430,13 +440,22 @@ export default function AdminPanel() {
                     <TableCell className="text-gray-500">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—'}</TableCell>
                     {!isAdmin && (
                       <TableCell>
-                        <button
-                          onClick={() => openEdit(c)}
-                          className="p-1.5 rounded-md text-gray-400 hover:text-[#3f51b5] hover:bg-[#e8eaf6] transition-colors"
-                          title="Edit submission"
-                        >
-                          <Pencil size={15} strokeWidth={2} />
-                        </button>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => setViewComplaint(c)}
+                            className="p-1.5 rounded-md text-gray-400 hover:text-[#3f51b5] hover:bg-[#e8eaf6] transition-colors"
+                            title="View details"
+                          >
+                            <Eye size={15} strokeWidth={2} />
+                          </button>
+                          <button
+                            onClick={() => openEdit(c)}
+                            className="p-1.5 rounded-md text-gray-400 hover:text-[#3f51b5] hover:bg-[#e8eaf6] transition-colors"
+                            title="Edit submission"
+                          >
+                            <Pencil size={15} strokeWidth={2} />
+                          </button>
+                        </div>
                       </TableCell>
                     )}
                   </TableRow>
@@ -543,6 +562,46 @@ export default function AdminPanel() {
           </Button>
           <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Cancel</Button>
         </div>
+      </Modal>
+
+      <Modal show={!!viewComplaint} onClose={() => setViewComplaint(null)} title="Complaint / Feedback Details">
+        {viewComplaint && (
+          <div className="space-y-4">
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Title</p>
+              <p className="text-[15px] font-semibold text-gray-900">{viewComplaint.title}</p>
+            </div>
+            <div className="flex gap-6">
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Type</p>
+                <Badge value="todo">{viewComplaint.type}</Badge>
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Status</p>
+                <Badge value={viewComplaint.status?.toLowerCase().replace('_', '-')}>{viewComplaint.status}</Badge>
+              </div>
+            </div>
+            {isAdmin && viewComplaint.raisedByName && (
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Raised By</p>
+                <p className="text-[14px] text-gray-700">{viewComplaint.raisedByName}</p>
+              </div>
+            )}
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Date Submitted</p>
+              <p className="text-[14px] text-gray-700">
+                {viewComplaint.createdAt ? new Date(viewComplaint.createdAt).toLocaleDateString() : '—'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Description</p>
+              <p className="text-[14px] text-gray-600 whitespace-pre-wrap">{viewComplaint.description || '—'}</p>
+            </div>
+            <div className="pt-2 border-t border-gray-100">
+              <Button variant="secondary" onClick={() => setViewComplaint(null)}>Close</Button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

@@ -22,7 +22,7 @@ export default function ReportViewer() {
     setLoading(true);
     clearMessages();
     try {
-      const res = await reportService.download(projectId);
+      const res = await reportService.dowxxnload(projectId);
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const a = document.createElement('a');
       a.href = url;
