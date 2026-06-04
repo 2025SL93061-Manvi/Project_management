@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { activityService } from '../../services/activityService';
 import { Card, CardHeader, CardTitle } from '../ui/card';
-import { Clock, ArrowLeft } from 'lucide-react';
+import { Clock, ArrowLeft, ExternalLink } from 'lucide-react';
 
 const ACTION_COLOR = {
   CREATED:        { bg: 'bg-emerald-100', text: 'text-emerald-700' },
@@ -10,6 +10,16 @@ const ACTION_COLOR = {
   STATUS_CHANGED: { bg: 'bg-amber-100',   text: 'text-amber-700'   },
   DELETED:        { bg: 'bg-red-100',     text: 'text-red-600'     },
 };
+
+function getLinkUrl(log) {
+  const base = `/projects/${log.projectId}`;
+  switch (log.entityType) {
+    case 'TASK':      return `${base}/tasks`;
+    case 'MEETING':   return `${base}/meetings`;
+    case 'MILESTONE': return `${base}/milestones`;
+    default:          return base;
+  }
+}
 
 function timeAgo(dateStr) {
   if (!dateStr) return '';
@@ -67,7 +77,7 @@ export default function ActivityLogPage() {
             {logs.map((a, i) => {
               const colors = ACTION_COLOR[a.action] || { bg: 'bg-gray-100', text: 'text-gray-600' };
               return (
-                <div key={a.id} className="flex items-start gap-4 px-4 py-3.5 hover:bg-gray-50/60 transition-colors">
+                <div key={a.id} onClick={() => navigate(getLinkUrl(a))} className="group flex items-start gap-4 px-4 py-3.5 hover:bg-gray-50/60 transition-colors cursor-pointer">
                   {/* Timeline dot */}
                   <div className="flex flex-col items-center shrink-0 pt-1">
                     <div className="w-7 h-7 rounded-full bg-[#e8eaf6] flex items-center justify-center text-[11px] font-bold text-[#3f51b5]">
@@ -92,11 +102,14 @@ export default function ActivityLogPage() {
                   </div>
 
                   {/* Timestamp */}
-                  <span className="text-[11px] text-gray-400 shrink-0 pt-1 hidden sm:block">
-                    {a.createdAt ? new Date(a.createdAt).toLocaleString('en-GB', {
-                      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
-                    }) : ''}
-                  </span>
+                  <div className="flex items-center gap-2 shrink-0 pt-1">
+                    <span className="text-[11px] text-gray-400 hidden sm:block">
+                      {a.createdAt ? new Date(a.createdAt).toLocaleString('en-GB', {
+                        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+                      }) : ''}
+                    </span>
+                    <ExternalLink size={12} strokeWidth={2} className="text-gray-300 group-hover:text-[#3f51b5] hidden sm:block" />
+                  </div>
                 </div>
               );
             })}

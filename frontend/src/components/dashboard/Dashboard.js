@@ -15,6 +15,16 @@ import {
   ExternalLink, RotateCcw, Check, Clock
 } from 'lucide-react';
 
+function getActivityLinkUrl(a) {
+  const base = `/projects/${a.projectId}`;
+  switch (a.entityType) {
+    case 'TASK':      return `${base}/tasks`;
+    case 'MEETING':   return `${base}/meetings`;
+    case 'MILESTONE': return `${base}/milestones`;
+    default:          return base;
+  }
+}
+
 function formatDate(dateStr) {
   if (!dateStr) return '—';
   const [y, m, d] = dateStr.split('-');
@@ -364,7 +374,7 @@ export default function Dashboard() {
           </CardHeader>
           <div className="divide-y divide-gray-50 max-h-[320px] overflow-y-auto">
             {data.recentActivity.map(a => (
-              <div key={a.id} className="flex items-start gap-3 px-4 py-3">
+              <div key={a.id} onClick={() => navigate(getActivityLinkUrl(a))} className="group flex items-start gap-3 px-4 py-3 hover:bg-gray-50/60 transition-colors cursor-pointer">
                 <div className="w-7 h-7 rounded-full bg-[#e8eaf6] flex items-center justify-center shrink-0 text-[11px] font-bold text-[#3f51b5]">
                   {a.userName?.charAt(0)?.toUpperCase() || '?'}
                 </div>
@@ -379,9 +389,12 @@ export default function Dashboard() {
                     {a.createdAt ? new Date(a.createdAt).toLocaleString() : ''}
                   </p>
                 </div>
-                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 shrink-0">
-                  {a.entityType}
-                </span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                    {a.entityType}
+                  </span>
+                  <ExternalLink size={11} strokeWidth={2} className="text-gray-300 group-hover:text-[#3f51b5] transition-colors" />
+                </div>
               </div>
             ))}
           </div>
