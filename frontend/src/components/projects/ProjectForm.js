@@ -131,7 +131,7 @@ export default function ProjectForm() {
             </FormGroup>
             <FormGroup>
               <Label htmlFor="endDate">End Date</Label>
-              <DatePicker name="endDate" value={form.endDate} onChange={handleChange} />
+              <DatePicker name="endDate" value={form.endDate} onChange={handleChange} minDate={form.startDate} />
             </FormGroup>
           </div>
           <FormGroup>

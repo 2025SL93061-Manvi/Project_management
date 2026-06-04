@@ -19,6 +19,8 @@ export default function ProjectList() {
   const [loading, setLoading]           = useState(true);
   const [error, setError]               = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [deleteId, setDeleteId]         = useState(null);
+  const [deleteError, setDeleteError]   = useState('');
 
   useEffect(() => {
     const fetch = user?.role === 'ADMIN'
@@ -30,13 +32,13 @@ export default function ProjectList() {
       .finally(() => setLoading(false));
   }, [user]);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this project?')) return;
+  const confirmDelete = async () => {
     try {
-      await projectService.delete(id);
-      setProjects(projects.filter(p => p.id !== id));
+      await projectService.delete(deleteId);
+      setProjects(projects.filter(p => p.id !== deleteId));
+      setDeleteId(null);
     } catch {
-      alert('Failed to delete project');
+      setDeleteError('Failed to delete project');
     }
   };
 
@@ -138,7 +140,7 @@ export default function ProjectList() {
                           <Pencil size={15} strokeWidth={2} />
                         </button>
                         <button
-                          onClick={() => handleDelete(p.id)}
+                          onClick={() => { setDeleteId(p.id); setDeleteError(''); }}
                           className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                           title="Delete project"
                         >
@@ -153,6 +155,37 @@ export default function ProjectList() {
           </TableBody>
         </Table>
       </Card>
+
+      {deleteId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <Trash2 size={18} className="text-red-600" strokeWidth={2} />
+              </div>
+              <h2 className="text-[17px] font-bold text-gray-900">Delete Project</h2>
+            </div>
+            <p className="text-[14px] text-gray-500 mt-1 mb-4">
+              Are you sure you want to delete this project? This action cannot be undone.
+            </p>
+            {deleteError && <p className="text-[13px] text-red-600 mb-3">{deleteError}</p>}
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setDeleteId(null)}
+                className="px-4 py-2 rounded-lg text-[13px] font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 rounded-lg text-[13px] font-medium text-white bg-red-600 hover:bg-red-700 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

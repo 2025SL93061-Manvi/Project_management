@@ -22,7 +22,7 @@ function formatDisplay(iso) {
   return `${String(p.day).padStart(2, '0')}/${String(p.month + 1).padStart(2, '0')}/${p.year}`;
 }
 
-export function DatePicker({ value, onChange, name, placeholder = 'DD / MM / YYYY', className }) {
+export function DatePicker({ value, onChange, name, placeholder = 'DD / MM / YYYY', className, minDate }) {
   const today = new Date();
   const todayY = today.getFullYear();
   const todayM = today.getMonth();
@@ -94,6 +94,14 @@ export function DatePicker({ value, onChange, name, placeholder = 'DD / MM / YYY
   // Year grid: 12-year page aligned to multiples of 12
   const yearPageStart = Math.floor(viewYear / 12) * 12;
   const yearGrid = Array.from({ length: 12 }, (_, i) => yearPageStart + i);
+
+  const minParsed = parseISO(minDate);
+  function isDisabled(d) {
+    if (!minParsed) return false;
+    if (viewYear !== minParsed.year) return viewYear < minParsed.year;
+    if (viewMonth !== minParsed.month) return viewMonth < minParsed.month;
+    return d < minParsed.day;
+  }
 
   const isSelected = d => parsed?.year === viewYear && parsed?.month === viewMonth && parsed?.day === d;
   const isToday    = d => todayY === viewYear && todayM === viewMonth && todayD === d;
@@ -177,10 +185,13 @@ export function DatePicker({ value, onChange, name, placeholder = 'DD / MM / YYY
                       <button
                         key={d}
                         type="button"
-                        onClick={() => selectDay(d)}
+                        onClick={() => !isDisabled(d) && selectDay(d)}
+                        disabled={isDisabled(d)}
                         className={cn(
                           'h-8 w-8 mx-auto flex items-center justify-center rounded-full text-[12px] font-medium transition-all duration-100',
-                          isSelected(d)
+                          isDisabled(d)
+                            ? 'text-gray-300 cursor-not-allowed'
+                            : isSelected(d)
                             ? 'bg-[#3f51b5] text-white shadow font-bold scale-110'
                             : isToday(d)
                             ? 'ring-2 ring-[#3f51b5] text-[#3f51b5] font-bold'
