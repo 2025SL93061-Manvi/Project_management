@@ -64,9 +64,9 @@ Create a MySQL database and note the connection details.
 Create `backend/.env` (or set environment variables):
 
 ```env
-DB_URL=jdbc:mysql://localhost:3306/your_database
-DB_USERNAME=your_db_user
-DB_PASSWORD=your_db_password
+DB_URL=jdbc:mysql://localhost:3306/enterprise_pm?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+DB_USERNAME=root
+DB_PASSWORD=root
 
 JWT_SECRET=your_jwt_secret_key
 JWT_EXPIRATION=86400000
